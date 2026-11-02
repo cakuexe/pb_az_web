@@ -153,7 +153,7 @@ const MELEE_REACH_MAX = 3;
  */
 const isBallisticKnife = (d: WeaponDef): boolean => d.family === "KNIFE" && !!d.pb?.needToLoadBullet && (d.pb?.loadBullet ?? 0) > 0;
 /** Mini Axe, Chinese Cleaver, Field Shovel, Kunai and Ballistic Knife variants whose Extension1 is Throw. */
-const isThrowableKnife = (d: WeaponDef): boolean => d.family === "KNIFE" && d.pb?.extType === "Throw" && d.loadedBullet > 0; const isHybridMelee = (d: WeaponDef): boolean => d.family !== "KNIFE" && !!d.params.melee && !!d.pb?.melee && (d.pb.melee.damageB1 !== undefined || d.pb.melee.timeB1 !== undefined || d.pb.melee.fireDelay2 !== undefined);
+const isThrowableKnife = (d: WeaponDef): boolean => d.family === "KNIFE" && d.pb?.extType === "Throw" && d.loadedBullet > 0; const isHybridMelee = (d: WeaponDef): boolean => d.id === 213001 || (d.family !== "KNIFE" && !!d.params.melee && !!d.pb?.melee && (d.pb.melee.damageB1 !== undefined || d.pb.melee.timeB1 !== undefined || d.pb.melee.fireDelay2 !== undefined));
 /** Kunai throw: ext item 301107 Range 70; blade length to the tip of Kunai_Dual (EdgeTraceEnd 0.284 m) */
 const KUNAI_RANGE = 70, KUNAI_TIP = 0.284, KUNAI_STICK_DEPTH = 0.06, KUNAI_SPEED = 45, KUNAI_STUCK_LIFE = 20;
 /**

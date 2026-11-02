@@ -31,6 +31,14 @@ const GREEN: RGB = [142, 183, 64], GREY: RGB = [180, 180, 180], WHITE: RGB = [25
 const AMMO_CELLS = 21, CELL_PX = 4;
 const pad3 = (n: number) => String(Math.max(0, Math.trunc(n))).padStart(3, "0");
 
+/** [RECRIADO] the exe keeps the HP text GREEN (+0x7c): web colouring, green at full HP -> yellow as the percent falls, red under 20 HP */
+const YELLOW: RGB = [255, 220, 0], RED: RGB = [230, 40, 30], HP_RED_BELOW = 20;
+export function hpColor(hp: number, maxHp: number): RGB {
+  if (Math.ceil(hp) < HP_RED_BELOW) return RED;
+  const t = 1 - Math.max(0, Math.min(1, hp / Math.max(1, maxHp)));
+  return [0, 1, 2].map((i) => Math.round(GREEN[i] + (YELLOW[i] - GREEN[i]) * t)) as unknown as RGB;
+}
+
 /** ammo gauge: frame 84x18 + n rounds x 4 px fill (ammo bar frame +0xb0 idx0 / fill idx1, 0x724f51) */
 function ammoBar(boxes: SprBox[], x: number, y: number, n: number, dim: boolean): void {
   boxes.push({ tex: "Hud.png", x, y, w: 84, h: 18, uv: [155, 1, 237, 19], dim });
@@ -62,7 +70,7 @@ export function charaLayout(d: HudData, W: number, H: number, f: CharaFlags): Pa
     } else ammoBar(boxes, W - 103, H - 52, n, false);
   }
   const texts: I3Text[] = [
-    { text: pad3(Math.ceil(d.hp)), x: W - 170, y: H - 43, w: 70, h: 50, face: "Gunplay", size: 28, color: GREEN },
+    { text: pad3(Math.ceil(d.hp)), x: W - 170, y: H - 43, w: 70, h: 50, face: "Gunplay", size: 28, color: hpColor(d.hp, d.maxHp) },
     { text: w.name, x: W - 109, y: H - 97, w: 92, h: 13, face: "Arial", size: 10, color: GREY, ax: 1, ay: 1 },
   ];
   if (!melee) texts.push({ text: count ? `        ${Math.max(0, w.ammo)}` : `${pad3(w.ammo)}/${pad3(w.reserve)}`, x: W - 100, y: H - 82, w: 100, h: 30, face: "Gunplay", size: 19, color: WHITE });

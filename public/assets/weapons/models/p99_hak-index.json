@@ -1,0 +1,23 @@
+{
+  "generated": "2026-11-03T00:00:00.000Z",
+  "weapons": [
+    {
+      "id": "p99_hak",
+      "kind": "pistol",
+      "file": "p99_reload.glb",
+      "textured": false,
+      "muzzle": "FXDummy",
+      "grip": "GunDummy",
+      "itemIds": [
+        213001
+      ]
+    },
+    {
+      "id": "hak",
+      "kind": "unknown",
+      "file": "hak.glb",
+      "textured": true,
+      "grip": "GunDummy"
+    }
+  ]
+}

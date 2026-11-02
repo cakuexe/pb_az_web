@@ -39,6 +39,8 @@ export const isClanAsk = (type: number): boolean => type === NoteType.CLAN_ASK |
 
 /** goodId of a gift note: the low dword of the header's senderId (exe _NoteReceive `_ui32GoodsID`, UIPopupReceiveMail::ReceivePresent 0x91e900) */
 export const giftGoodsId = (n: Note): number => Number(BigInt.asUintN(32, n.senderId));
+/** item of a gift note: the server builds a goodId as `${itemId}${2-digit variant}` (server/src/shared/shop.ts loadShopItems) */
+export const giftItemId = (n: Note): number => Math.trunc(giftGoodsId(n) / 100);
 
 /** wstrz: UTF-16 chars up to a NUL char (socialHandlers.ts wstrz) */
 function readWstrz(r: PacketReader): string {

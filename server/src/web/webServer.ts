@@ -101,7 +101,7 @@ async function handleApi(req: http.IncomingMessage, res: http.ServerResponse, ur
       return;
     }
     if (pathname.startsWith("/api/admin/")) {
-      const body = req.method === "PATCH" ? await readJsonBody(req) : undefined;
+      const body = req.method === "PATCH" || req.method === "POST" ? await readJsonBody(req) : undefined;
       const result = await handleAdminApi(req, url, body);
       sendJson(res, result.status ?? 200, result.body);
       return;

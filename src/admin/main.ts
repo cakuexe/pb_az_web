@@ -90,8 +90,9 @@ async function renderPage(): Promise<void> {
 async function renderUsers(page: HTMLElement): Promise<void> {
   const data = await api<{ total: number; users: User[] }>(`/api/admin/users?q=${encodeURIComponent(query)}`);
   page.querySelector(".panel")!.className = "panel";
-  page.querySelector(".panel")!.innerHTML = `<div class="panel-head"><div><b>${data.total.toLocaleString("az-AZ")}</b><span> qeydiyyatlı hesab</span></div><span>Redaktə üçün sətrə kliklə</span></div><div class="table-wrap"><table><thead><tr><th>İSTİFADƏÇİ</th><th>RÜTBƏ</th><th>POINT</th><th>NG</th><th>SƏLAHİYYƏT</th><th>STATUS</th><th></th></tr></thead><tbody>${data.users.map(u => `<tr data-id="${u.player_id}"><td><div class="user-cell"><span class="mini-avatar">${esc(u.nickname[0]?.toUpperCase() || "?")}</span><div><b>${esc(u.nickname)}</b><small>@${esc(u.username)} · #${u.player_id}</small></div></div></td><td>${u.rank}</td><td>${u.gold.toLocaleString("az-AZ")}</td><td>${u.cash.toLocaleString("az-AZ")}</td><td><span class="role ${u.access_level >= 100 ? "gm" : u.access_level < 0 ? "ban" : ""}">${u.access_level >= 100 ? "GM" : u.access_level < 0 ? "BAN" : "OYUNÇU"}</span></td><td><span class="status ${u.online ? "on" : ""}">${u.online ? "Onlayn" : "Oflayn"}</span></td><td>›</td></tr>`).join("")}</tbody></table></div>`;
+  page.querySelector(".panel")!.innerHTML = `<div class="panel-head"><div><b>${data.total.toLocaleString("az-AZ")}</b><span> qeydiyyatlı hesab</span></div><span>Redaktə üçün sətrə kliklə</span></div><div class="table-wrap"><table><thead><tr><th>İSTİFADƏÇİ</th><th>RÜTBƏ</th><th>POINT</th><th>NG</th><th>SƏLAHİYYƏT</th><th>STATUS</th><th></th></tr></thead><tbody>${data.users.map(u => `<tr data-id="${u.player_id}"><td><div class="user-cell"><span class="mini-avatar">${esc(u.nickname[0]?.toUpperCase() || "?")}</span><div><b>${esc(u.nickname)}</b><small>@${esc(u.username)} · #${u.player_id}</small></div></div></td><td>${u.rank}</td><td>${u.gold.toLocaleString("az-AZ")}</td><td>${u.cash.toLocaleString("az-AZ")}</td><td><span class="role ${u.access_level >= 100 ? "gm" : u.access_level < 0 ? "ban" : ""}">${u.access_level >= 100 ? "GM" : u.access_level < 0 ? "BAN" : "OYUNÇU"}</span></td><td><span class="status ${u.online ? "on" : ""}">${u.online ? "Onlayn" : "Oflayn"}</span></td><td><button class="grant-item" type="button" data-grant="${u.player_id}">+ Item</button> ›</td></tr>`).join("")}</tbody></table></div>`;
   page.querySelectorAll<HTMLTableRowElement>("tr[data-id]").forEach((tr) => tr.onclick = () => editUser(data.users.find(u => u.player_id === tr.dataset.id)!));
+  page.querySelectorAll<HTMLButtonElement>("[data-grant]").forEach((b) => b.onclick = (e) => { e.stopPropagation(); grantItem(data.users.find(u => u.player_id === b.dataset.grant)!); });
 }
 
 async function renderShop(page: HTMLElement): Promise<void> {
@@ -125,6 +126,31 @@ function modal(title: string, subtitle: string, fields: string, onSave: (form: F
 const field = (label: string, name: string, value: unknown, type = "text", required = true) => `<label>${label}<input name="${name}" type="${type}" value="${esc(value)}" ${required ? "required" : ""}></label>`;
 function editUser(u: User): void {
   modal(u.nickname, `@${u.username} · Oyunçu ID: ${u.player_id}`, `<div class="form-grid">${field("Ləqəb", "nickname", u.nickname)}${field("Rütbə", "rank", u.rank, "number")}${field("Təcrübə", "experience", u.experience, "number")}${field("Point", "gold", u.gold, "number")}${field("NG", "cash", u.cash, "number")}<label>Giriş səviyyəsi<select name="access_level"><option value="0" ${u.access_level === 0 ? "selected" : ""}>0 — Oyunçu</option><option value="50" ${u.access_level === 50 ? "selected" : ""}>50 — Moderator</option><option value="100" ${u.access_level === 100 ? "selected" : ""}>100 — Game Master</option><option value="-1" ${u.access_level < 0 ? "selected" : ""}>-1 — Bloklanıb</option></select></label></div>`, async f => api(`/api/admin/users/${u.player_id}`, { method: "PATCH", body: JSON.stringify({ nickname: f.get("nickname"), rank: Number(f.get("rank")), experience: Number(f.get("experience")), gold: Number(f.get("gold")), cash: Number(f.get("cash")), access_level: Number(f.get("access_level")) }) }));
+}
+function grantItem(u: User): void {
+  const wrap = modal(`${u.nickname} — item əlavə et`, `Oyunçu ID: ${u.player_id}. Pul çıxılmır.`, `<label>Məhsul axtar<input id="grant-search" placeholder="Məhsul adı və ya ID" autocomplete="off"></label><div class="reward-list" id="grant-results"></div><label>Seçilən məhsul və say / müddət<select name="good_id" id="grant-good" required><option value="">Əvvəlcə məhsul seçin</option></select></label>`, async f => {
+    await api(`/api/admin/users/${u.player_id}/items`, { method: "POST", body: JSON.stringify({ good_id: Number(f.get("good_id")) }) });
+  });
+  const search = wrap.querySelector<HTMLInputElement>("#grant-search")!, results = wrap.querySelector<HTMLElement>("#grant-results")!, select = wrap.querySelector<HTMLSelectElement>("#grant-good")!;
+  let wait = 0, seq = 0;
+  const pick = async (item: ShopItem) => {
+    const data = await api<{ goods: { good_id: number; name: string; count: number }[] }>(`/api/admin/shop/${item.item_id}/goods`);
+    select.innerHTML = data.goods.length ? data.goods.map(g => `<option value="${g.good_id}">${esc(g.name)} — say/müddət: ${g.count} (#${g.good_id})</option>`).join("") : `<option value="">Bu məhsul verilə bilmir</option>`;
+  };
+  const find = async () => {
+    const mine = ++seq, q = search.value.trim();
+    if (!q) { results.innerHTML = ""; return; }
+    const data = await api<{ items: ShopItem[] }>(`/api/admin/shop?q=${encodeURIComponent(q)}&limit=30`);
+    if (mine !== seq) return;
+    results.innerHTML = data.items.length ? data.items.map(i => `<div data-pick="${i.item_id}">${iconHtml(i.item_id)}<span><b>${esc(i.item_name)}</b><small>#${i.item_id}</small></span><strong>Seç</strong></div>`).join("") : `<div>Tapılmadı</div>`;
+    results.querySelectorAll<HTMLElement>("[data-pick]").forEach(el => el.onclick = () => {
+      results.querySelectorAll("[data-pick]").forEach(x => x.classList.toggle("picked", x === el));
+      void pick(data.items.find(i => String(i.item_id) === el.dataset.pick)!).catch(err => toast((err as Error).message, true));
+    });
+  };
+  search.onkeydown = e => { if (e.key === "Enter") e.preventDefault(); };
+  search.oninput = () => { clearTimeout(wait); wait = window.setTimeout(() => void find().catch(err => toast((err as Error).message, true)), 280); };
+  search.focus();
 }
 async function editShop(i: ShopItem): Promise<void> {
   const fromShopDate = (v: number) => { const s = String(v || ""); return s.length === 10 ? `20${s.slice(0,2)}-${s.slice(2,4)}-${s.slice(4,6)}T${s.slice(6,8)}:${s.slice(8,10)}` : ""; };

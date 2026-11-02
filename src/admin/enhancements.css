@@ -104,4 +104,8 @@
 .reward-list > div { display: grid; grid-template-columns: 64px 1fr auto; align-items: center; gap: 10px; padding: 7px 4px; border-top: 1px solid #202b3b; }
 .reward-list span { display: flex; flex-direction: column; min-width: 0; }
 .reward-list small { color: #7890ae; }
+.reward-list [data-pick] { cursor: pointer; }
+.reward-list [data-pick]:hover, .reward-list .picked { background: #1a2636; }
+.grant-item { padding: 4px 10px; border: 1px solid #2d3d52; border-radius: 6px; background: transparent; color: #50e3a4; font-weight: 600; cursor: pointer; }
+.grant-item:hover { background: #1a2636; }
 .reward-list strong { color: #50e3a4; }

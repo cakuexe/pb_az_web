@@ -2,7 +2,13 @@ import type http from "node:http";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { accountByToken, pool, type AccountRow } from "../db.ts";
-import { getGood, loadShop } from "../shared/shop.ts";
+import { getGood, loadShop, shop } from "../shared/shop.ts";
+import { getIdStatics } from "../shared/items.ts";
+import { createCharacter, loadPlayerInventory, tryCreateItem } from "../shared/playerUtils.ts";
+import { lookup, onlineAccounts, type GameClient } from "../game/gameServer.ts";
+import { inventoryGetInfoAck } from "../game/packets.ts";
+import { createCharacterGame } from "../game/profileHandlers.ts";
+import { isSeasonShopGood } from "../game/progress.ts";
 import { AccountApiError } from "./accounts/accounts.ts";
 
 export interface AdminResult { status?: number; body: unknown }
@@ -168,6 +174,41 @@ async function battleBoxDetails(id: string): Promise<AdminResult> {
   return { body: { box: { coupon_id: Number(box.coupon_id), require_tags: Number(box.require_tags), rewards } } };
 }
 
+/** class 36 and season goods are applied by the buy path itself, they are not inventory items */
+const grantable = (good: { item: { id: number } } & Parameters<typeof isSeasonShopGood>[0]) => getIdStatics(good.item.id, 1) !== 36 && !isSeasonShopGood(good);
+
+function itemGoods(id: string): AdminResult {
+  const seen = new Map<number, { good_id: number; name: string; count: number }>();
+  for (const g of shop.all) if (String(g.item.id) === id && grantable(g)) seen.set(g.id, { good_id: g.id, name: g.item.name, count: g.item.count });
+  return { body: { goods: [...seen.values()] } };
+}
+
+/** Same delivery as a shop purchase, without the charge. An offline account is loaded for this call only and gets it at its next login. */
+async function grantToUser(req: http.IncomingMessage, admin: AccountRow, id: string, raw: unknown): Promise<AdminResult> {
+  const good = getGood(integer(objectBody(raw).good_id, "məhsul", 1, 2147483647));
+  if (!good || !grantable(good)) throw new AccountApiError(404, "məhsul tapılmadı");
+  const pid = BigInt(id);
+  const online = onlineAccounts.get(pid) ?? null;
+  const target = online ?? await lookup.byPid(pid);
+  if (!target) throw new AccountApiError(404, "istifadəçi tapılmadı");
+  // getAccountDB does not load the inventory: without it tryCreateItem adds a second row instead of merging
+  if (!online) await loadPlayerInventory(target);
+  const conn = online?.connection as GameClient | null | undefined;
+  const model = good.item.clone();
+  if (getIdStatics(model.id, 1) === 6 && !target.character.getCharacter(model.id)) {
+    if (conn) await createCharacterGame(conn, target, model);
+    else {
+      if (!(await tryCreateItem(model, target))) throw new AccountApiError(500, "item yazıla bilmədi");
+      await createCharacter(target, model);
+    }
+  } else {
+    if (!(await tryCreateItem(model, target))) throw new AccountApiError(500, "item yazıla bilmədi");
+    conn?.session.send(inventoryGetInfoAck(0, target, [model]));
+  }
+  await audit(admin, req, "users", `istifadəçi ${id} üçün item verildi: good ${good.id} (${model.name})`);
+  return { body: { ok: true, online: !!conn, name: model.name } };
+}
+
 const csvInteger = (value: unknown, name: string): string => {
   const text = String(value ?? "").trim();
   if (!/^\d+(,\d+)*$/.test(text) || text.length > 255) throw new AccountApiError(400, `${name} vergüllə ayrılmış ədədlər olmalıdır`);
@@ -239,6 +280,10 @@ export async function handleAdminApi(req: http.IncomingMessage, url: URL, body?:
   if (req.method === "GET" && url.pathname === "/api/admin/shop") return shopItems(url);
   const box = url.pathname.match(/^\/api\/admin\/boxes\/(28\d{5})$/);
   if (req.method === "GET" && box) return battleBoxDetails(box[1]);
+  const goods = url.pathname.match(/^\/api\/admin\/shop\/(\d+)\/goods$/);
+  if (req.method === "GET" && goods) return itemGoods(goods[1]);
+  const userItems = url.pathname.match(/^\/api\/admin\/users\/(\d+)\/items$/);
+  if (req.method === "POST" && userItems) return grantToUser(req, admin, userItems[1], body);
   const user = url.pathname.match(/^\/api\/admin\/users\/(\d+)$/);
   if (req.method === "PATCH" && user) return updateUser(req, admin, user[1], body);
   const item = url.pathname.match(/^\/api\/admin\/shop\/(\d+)$/);

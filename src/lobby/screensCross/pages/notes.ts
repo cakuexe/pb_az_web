@@ -18,7 +18,7 @@
 // Aceitar = popup 0x2a (askTake, Ok = 1056 via takeGift). Não lê ao clicar (readsOnPick) e não tem Responder nem Excluir.
 import { chat } from "../../../net/chatClient.ts";
 import { acceptGift } from "../../../net/metaGame.ts";
-import { NoteErr, NoteState, NoteType, READ_DAYS, answerClanNote, deleteNotes, giftGoodsId, isClanAsk, newestFirst, noteList, readNotes, readsOnPick, replyNote, sendNote, type Note } from "../../../net/noteClient.ts";
+import { NoteErr, NoteState, NoteType, READ_DAYS, answerClanNote, deleteNotes, giftItemId, isClanAsk, newestFirst, noteList, readNotes, readsOnPick, replyNote, sendNote, type Note } from "../../../net/noteClient.ts";
 import { ItemClass, itemClass } from "../../state/itemInfo.ts";
 import { itemName } from "../../state/itemNames.ts";
 import type { I3Gui } from "../../ui/i3Gui.ts";
@@ -239,7 +239,7 @@ export class NotesPage {
   }
 
   private contentText(n: Note): string {
-    if (n.type === NoteType.GIFT) return itemName(giftGoodsId(n)).name;
+    if (n.type === NoteType.GIFT) return itemName(giftItemId(n)).name;
     return isClanAsk(n.type) ? this.str("STR_POPUP_CLAN_INVITE_NOTE", "Convite para o clã") : n.text;
   }
 
@@ -280,13 +280,14 @@ export class NotesPage {
    * Value2 (days / count) has no decoded source here and stays hidden.
    */
   private paintGift(n: Note | null): void {
-    const g = this.g, id = n ? giftGoodsId(n) : 0, cls = itemClass(id);
+    const g = this.g, id = n ? giftItemId(n) : 0, cls = itemClass(id);
     const img = cls >= ItemClass.Primary && cls <= ItemClass.Special ? "cmNoteGiftWeaponImage" : cls === ItemClass.Character ? "cmNoteGiftCharacterImage" : "cmNoteGiftCashItemImage";
     g.show("cmNoteGiftItemFrame", !!n);
     for (const k of ["cmNoteGiftWeaponImage", "cmNoteGiftCharacterImage", "cmNoteGiftCashItemImage"]) g.show(k, !!n && k === img);
     if (n) setIcon(g, img, id);
     g.show("cmNoteGiftValue1", !!n);
-    g.setText("cmNoteGiftValue1", n ? itemName(id).name : "");
+    // [RECRIADO] the second line (who sent it, and the gift's text when it has one): the exe's card shows the sender only in cmNoteWhoValue
+    g.setText("cmNoteGiftValue1", n ? `${itemName(id).name}\n${n.sender} tərəfindən hədiyyə${n.text ? `\n${n.text}` : ""}` : "");
   }
 
   /** the rows of cmNoteList and the message card; called by community.ts while the Msg. tab is open */

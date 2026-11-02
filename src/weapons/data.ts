@@ -11,8 +11,8 @@ const FALLBACK_STATS: WeaponStat[] = [
     loadedBullet: 30, totalBullet: 150, damage: 33, fireDelay: 0.09, rpm: 667, helmetPenetrate: 85, range: 160, sfx: "AssaultRifle_AK-47" },
   { id: 104033, name: "AKS74U", slot: 1, slotName: "primary", classType: 4, className: "SMG", family: "SMG",
     loadedBullet: 30, totalBullet: 210, damage: 26, fireDelay: 0.09, rpm: 667, helmetPenetrate: 85, range: 60, sfx: "SMG_AKS74U" },
-  { id: 202022, name: "Colt45", slot: 2, slotName: "secondary", classType: 2, className: "HandGun", family: "HG",
-    loadedBullet: 7, totalBullet: 28, damage: 25, fireDelay: 0.2, rpm: 300, helmetPenetrate: 83, range: 55, sfx: "HandGun_Colt45", changeTime: 0.6667 },
+  { id: 202003, name: "K-5", slot: 2, slotName: "secondary", classType: 2, className: "HandGun", family: "HG",
+    loadedBullet: 12, totalBullet: 48, damage: 17, fireDelay: 0.22, rpm: 273, helmetPenetrate: 38, range: 45, sfx: "HandGun_K5", changeTime: 0.6667 },
   { id: 301001, name: "M-7", slot: 3, slotName: "melee", classType: 1, className: "Knife", family: "KNIFE",
     loadedBullet: 0, totalBullet: 0, damage: 60, fireDelay: 0.4, rpm: 150, helmetPenetrate: 43, range: 1.5, sfx: "Melee_M-7", changeTime: 0.5 },
   { id: 407001, name: "K-400", slot: 4, slotName: "explosive", classType: 7, className: "ThrowingGrenade", family: "GRENADE",
@@ -143,7 +143,7 @@ export function dualKnifeAlias<T extends WeaponStat>(w: T): T {
 export class WeaponDb {
   hitzone: PartRates = { ...DEFAULT_HITZONE };
   grenadeFuse = GRENADE_FUSE;
-  defaultLoadout: Record<string, number> = { primary: 103037, secondary: 202022, melee: 301001, grenade: 407001 };
+  defaultLoadout: Record<string, number> = { primary: 103037, secondary: 202003, melee: 301001, grenade: 407001 };
   private stats = new Map<number, WeaponStat>(FALLBACK_STATS.map((w) => [w.id, w]));
   loaded = false;
 
@@ -151,7 +151,7 @@ export class WeaponDb {
     const j = await jsonOnce<WeaponsJson>(url);
     this.hitzone = { ...DEFAULT_HITZONE, ...(j.hitzone ?? {}) };
     this.grenadeFuse = j.classes?.GRENADE?.fuse ?? GRENADE_FUSE;
-    this.defaultLoadout = { ...this.defaultLoadout, ...j.defaultLoadout };
+    this.defaultLoadout = { ...this.defaultLoadout, ...j.defaultLoadout, secondary: 202003 };
     for (const w of j.weapons) this.stats.set(w.id, dualKnifeAlias(w));
     for (const [aliasText, baseId] of Object.entries(WEAPON_STAT_ALIASES)) {
       const alias = Number(aliasText), base = this.stats.get(baseId);

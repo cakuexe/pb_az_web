@@ -194,6 +194,10 @@ function loadBundle1pv(url: string): Promise<Map<string, THREE.AnimationClip>> {
 
 /** Pure: 1PV AI of a weapon (pef LinkedToCharaAI resolved by the exporter, else the family's basic weapon). */
 export function ai1pvFor(ix: Anim1pvIndex, w: { id: number; name: string; family: Family }): string | null {
+  // P99&HAK uses the CIC/P99 character AI in the installed client. HandGun/P99 is its firearm stance
+  // and has no SecondaryAttack; the CIC variant contains Attack_Hak_Semi for the HAK stab.
+  const p99HakAI = "CIC/P99";
+  if (w.id === 213001 && ix.ai[p99HakAI]?.stances.AttackIdle?.SecondaryAttack) return p99HakAI;
   // items weapons.json lacks (C-5 PBWC2016 407053) use their class base AI (throwables.ts: Throwing/C5, not the K-400)
   const hit = ix.weapons[String(w.id)] ?? ix.weapons[String(throwableBaseId(w.id))] ?? ix.names[normKey(w.name)];
   const A = hit ? ix.ai[hit]?.stances.AttackIdle : undefined;
@@ -980,7 +984,7 @@ export class Viewmodel {
   private bladeBack = [0, 0];
 
   meleeSwing(heavy: boolean, interval = 0, dual = false): void {
-    // P99&HAK has a weapon-specific HAK stab clip; play it on the pistol rig while the arms use their melee swing.
+    // The HAK blade has its own model-part animation; the character's SecondaryAttack is played below on the arms.
     if (heavy && this.lastDef?.id === 213001) this.wAnim?.play("attackHak");
     if (dual) {
       // each blade plays its own swing clip (LMB AttackA, RMB AttackB): it turns the blade in the hand (Kunai right:
@@ -989,12 +993,21 @@ export class Viewmodel {
       this.wAnim?.play(k);
       this.wAnimL?.play(k);
     }
-    if (this.rigActive && this.family === "KNIFE") {
+    // P99&HAK is a handgun model using a melee character AI. Its secondary attack must drive the
+    // 1PV arms exactly like a knife stab; a weapon-model clip cannot move the character's hands.
+    if (this.rigActive && (this.family === "KNIFE" || this.lastDef?.id === 213001)) {
       this.rig!.melee(heavy, interval, dual);
       return;
     }
     this.swing = 1;
     this.swingHeavy = heavy;
+  }
+
+  /** Duration of the equipped character-AI swing (used to keep P99&HAK's stab from being cut short). */
+  meleeDuration(secondary = false): number | null {
+    return this.rigActive
+      ? this.rig?.stateDur(secondary ? "SecondaryAttack" : "Attack") ?? null
+      : null;
   }
 
   /** hit on the local player: the arms' DamageFrontLeftA / FrontRightA / BackA (charAnim.hurt picks the same way for 3PV) [INFERIDO] */

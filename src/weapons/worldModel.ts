@@ -75,9 +75,14 @@ async function fetchJson<T>(url: string): Promise<T | null> {
 }
 
 export function loadWeaponModelIndex(): Promise<WeaponModelEntry[]> {
-  indexP ??= fetchJson<{ weapons?: WeaponModelEntry[] }>(`${BASE}/models/index.json`).then((j) =>
-    Array.isArray(j?.weapons) ? j!.weapons.filter((w) => w && w.id && w.file) : []
-  );
+  indexP ??= Promise.all([
+    fetchJson<{ weapons?: WeaponModelEntry[] }>(`${BASE}/models/index.json`),
+    fetchJson<{ weapons?: WeaponModelEntry[] }>(`${BASE}/models/p99_hak-index.json`),
+  ]).then(([main, overlay]) => {
+    const weapons = Array.isArray(main?.weapons) ? main!.weapons.filter((w) => w && w.id && w.file) : [];
+    const p99 = overlay?.weapons?.filter((w) => w && w.id && w.file) ?? [];
+    return [...weapons.filter((w) => !w.itemIds?.includes(213001)), ...p99];
+  });
   return indexP;
 }
 
@@ -177,7 +182,7 @@ function loadGlb(entry: WeaponModelEntry): Promise<THREE.Group | null> {
     // bounds what the shop prefetch (lobby/screensCross/preview.ts) keeps resident while paging 700+ weapons
     if (glbCache.size >= 64) glbCache.delete(glbCache.keys().next().value!);
     p = loadLodFirst(loader, `${BASE}/models/${entry.file}`)
-      .then((gltf) => {
+      .then(async (gltf) => {
         // strip AxisRotate: keep its children (i3 space, grip at origin)
         const axis = gltf.scene.children.length === 1 && !(gltf.scene.children[0] as THREE.Mesh).isMesh ? gltf.scene.children[0] : gltf.scene;
         const g = new THREE.Group();
@@ -185,6 +190,16 @@ function loadGlb(entry: WeaponModelEntry): Promise<THREE.Group | null> {
         axis.updateMatrix();
         g.userData.axis = axis === gltf.scene ? new THREE.Matrix4() : axis.matrix.clone();
         for (const c of [...axis.children]) g.add(c);
+        // P99&HAK is exported as two i3 models. Its stab clip is authored on the HAK model's own
+        // HakAnimationDummy/Hak nodes, so mount that animated subtree under the P99 GunDummy.
+        if (entry.id === "p99_hak") {
+          const hak = await loadLodFirst(loader, `${BASE}/models/hak.glb`).catch(() => null);
+          const hakAxis = hak?.scene.children.length === 1 && !(hak.scene.children[0] as THREE.Mesh).isMesh ? hak.scene.children[0] : hak?.scene;
+          const hakGun = hakAxis?.getObjectByName("GunDummy");
+          const pistolGun = g.getObjectByName("GunDummy");
+          const hakAnim = hakGun?.getObjectByName("HakAnimationDummy");
+          if (hakAnim && pistolGun) pistolGun.add(hakAnim.clone(true));
+        }
         g.traverse((o) => {
           const m = o as THREE.Mesh;
           if (m.isMesh) m.castShadow = true;

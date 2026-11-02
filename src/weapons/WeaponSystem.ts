@@ -1581,7 +1581,9 @@ export class WeaponSystem {
     if (this.time < this.nextFire) return;
     const heavy = input.aim && !input.fire;
     if (!input.fire && !input.aim) return;
-    const m = s.def.params.melee;
+    const m = s.def.params.melee ?? (s.def.id === 213001 ? {
+      damageA: s.def.params.damage, timeA: 0.1, damageB: s.def.params.damage, timeB: 0.55, delayB: 1.633,
+    } : undefined);
     // one swing per press, like every AutoFireCount >= 1 weapon (semi gate 0xa21e6c); holding the button re-swung every
     // FireDelay and cut the clip each time (Fang Blade: 0.55 s of a 1.13 s Attack_A). DualKnife: one swing = two hits [INFERIDO for melee]
     if (this.meleeLatched && (m?.timeA2 || (s.def.pb?.autoFireCount ?? 1) > 0)) return;
@@ -1594,6 +1596,7 @@ export class WeaponSystem {
     }
     // LMB: FireDelay / AttackTimeA1, RMB: FireDelay2 / AttackTimeB1 (Weapon.pef)
     let interval = heavy ? m?.delayB ?? s.def.fireDelay : s.def.fireDelay;
+    if (heavy && s.def.id === 213001) interval = Math.max(interval, this.viewmodel?.weaponAnimator?.state("attackHak")?.dur ?? 0);
     // the next swing cannot start before this one's hit lands: Knuckle FireDelay 0.1 / A1 0.2, Candy Cane 0.2 / 0.28,
     // Icicles 0.25 / 0.366, Kunai 0.05 / 0.3 would restart (and cut) the clip before its own hit [INFERIDO]
     interval = Math.max(interval, (heavy ? m?.timeB : m?.timeA) ?? 0);

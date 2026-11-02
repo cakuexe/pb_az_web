@@ -32,11 +32,12 @@ interface AnimIndex {
 }
 
 export type WeaponView = "1pv" | "3pv";
-export type WeaponAnimKind = "fire" | "reload" | "loadBullet" | "change" | "idle" | "extOn" | "extOff" | "attackA" | "attackB";
+export type WeaponAnimKind = "fire" | "reload" | "loadBullet" | "change" | "idle" | "extOn" | "extOff" | "attackA" | "attackB" | "attackHak";
 const STATE: Record<WeaponAnimKind, string> = {
   fire: "Fire", reload: "LoadMag", loadBullet: "LoadBullet", change: "Change", idle: "Idle", extOn: "ExtensionActivate", extOff: "ExtensionDeactivate",
   // DualKnife blades: each hand's own swing clip (Attack<A|B>_<Male_>Left / _Right) re-orients the blade in the hand
   attackA: "AttackA", attackB: "AttackB",
+  attackHak: "Attack_Hak",
 };
 
 export interface WeaponAnimSet {
@@ -75,6 +76,7 @@ function leftGrip(state: ClipJson, idle: ClipJson | undefined): boolean {
 }
 
 let indexP: Promise<AnimIndex | null> | null = null;
+let p99IndexP: Promise<AnimIndex | null> | null = null;
 const libP = new Map<string, Promise<Record<string, ClipJson> | null>>();
 const clipCache = new Map<string, THREE.AnimationClip>();
 const setCache = new Map<string, Promise<WeaponAnimSet | null>>();
@@ -108,8 +110,10 @@ export function loadWeaponAnimSet(modelId: string): Promise<WeaponAnimSet | null
   let p = setCache.get(modelId);
   if (p) return p;
   p = (async () => {
-    indexP ??= fetchJson<AnimIndex>(`${BASE}/index.json`);
-    const ix = await indexP;
+    const ixP = modelId === "p99_hak"
+      ? (p99IndexP ??= fetchJson<AnimIndex>(`${BASE}/p99_hak-index.json`))
+      : (indexP ??= fetchJson<AnimIndex>(`${BASE}/index.json`));
+    const ix = await ixP;
     const set = ix?.sets[ix.models[modelId] ?? -1];
     if (!ix || !set) return null;
     const files = [...new Set(Object.values(set.states).map((s) => ix.libs[s.clip]).filter(Boolean))];

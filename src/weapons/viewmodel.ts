@@ -980,6 +980,8 @@ export class Viewmodel {
   private bladeBack = [0, 0];
 
   meleeSwing(heavy: boolean, interval = 0, dual = false): void {
+    // P99&HAK has a weapon-specific HAK stab clip; play it on the pistol rig while the arms use their melee swing.
+    if (heavy && this.lastDef?.id === 213001) this.wAnim?.play("attackHak");
     if (dual) {
       // each blade plays its own swing clip (LMB AttackA, RMB AttackB): it turns the blade in the hand (Kunai right:
       // Idle q(-.56,-.43,-.56,.43) -> q(.48,-.53,.47,.52) at 0.13 s). Without it the blade kept its Idle pose under the swinging arm.

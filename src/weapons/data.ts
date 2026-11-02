@@ -151,7 +151,7 @@ export class WeaponDb {
     const j = await jsonOnce<WeaponsJson>(url);
     this.hitzone = { ...DEFAULT_HITZONE, ...(j.hitzone ?? {}) };
     this.grenadeFuse = j.classes?.GRENADE?.fuse ?? GRENADE_FUSE;
-    this.defaultLoadout = { ...this.defaultLoadout, ...j.defaultLoadout, secondary: 202003 };
+    this.defaultLoadout = { ...this.defaultLoadout, ...j.defaultLoadout, secondary: 202003, melee: 301001 };
     for (const w of j.weapons) this.stats.set(w.id, dualKnifeAlias(w));
     for (const [aliasText, baseId] of Object.entries(WEAPON_STAT_ALIASES)) {
       const alias = Number(aliasText), base = this.stats.get(baseId);

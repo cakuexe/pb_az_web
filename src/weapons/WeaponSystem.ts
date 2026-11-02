@@ -153,7 +153,7 @@ const MELEE_REACH_MAX = 3;
  */
 const isBallisticKnife = (d: WeaponDef): boolean => d.family === "KNIFE" && !!d.pb?.needToLoadBullet && (d.pb?.loadBullet ?? 0) > 0;
 /** Mini Axe, Chinese Cleaver, Field Shovel, Kunai and Ballistic Knife variants whose Extension1 is Throw. */
-const isThrowableKnife = (d: WeaponDef): boolean => d.family === "KNIFE" && d.pb?.extType === "Throw" && d.loadedBullet > 0;
+const isThrowableKnife = (d: WeaponDef): boolean => d.family === "KNIFE" && d.pb?.extType === "Throw" && d.loadedBullet > 0; const isHybridMelee = (d: WeaponDef): boolean => d.family !== "KNIFE" && !!d.params.melee && !!d.pb?.melee && (d.pb.melee.damageB1 !== undefined || d.pb.melee.timeB1 !== undefined || d.pb.melee.fireDelay2 !== undefined);
 /** Kunai throw: ext item 301107 Range 70; blade length to the tip of Kunai_Dual (EdgeTraceEnd 0.284 m) */
 const KUNAI_RANGE = 70, KUNAI_TIP = 0.284, KUNAI_STICK_DEPTH = 0.06, KUNAI_SPEED = 45, KUNAI_STUCK_LIFE = 20;
 /**
@@ -805,7 +805,7 @@ export class WeaponSystem {
       if (f === "KNIFE") this.updateMelee(s, input);
       else if (f === "GRENADE") this.updateGrenade(s, input, dt);
       else if (isMissionWeapon(s.def.id)) { /* Bomb Mission C4: inert here, Game reads the held fire button (plant) */ }
-      else this.updateGun(s, input, speed, grounded, dt);
+      else { this.updateGun(s, input, speed, grounded, dt); if (isHybridMelee(s.def)) this.updateMelee(s, { ...input, fire: false }); }
     }
     if (!input.fire) {
       this.autoCont = false;
@@ -822,14 +822,14 @@ export class WeaponSystem {
     const gun = vdef && vdef.family !== "KNIFE" && vdef.family !== "GRENADE" && !isMissionWeapon(vdef.id);
     if (vdef) this.scope.setWeapon(vdef.id);
     if (od) {
-      this.aiming = !!(gun && this.obs!.aiming && this.obs!.reloadT < 0);
+      this.aiming = !!(gun && !isHybridMelee(od) && this.obs!.aiming && this.obs!.reloadT < 0);
       this.scoped = this.aiming && !!od.params.scope && this.time >= this.obsBoltUntil;
     } else {
       const aimPress = !!input.aim && !this.aimWasDown;
       this.aimWasDown = !!input.aim;
-      if (!gun || switching || input.cancelZoom) this.setZoom(false);
+      if (!gun || (vdef && isHybridMelee(vdef)) || switching || input.cancelZoom) this.setZoom(false);
       else if (aimPress && !this.reloading) this.pressZoom(s!.def);
-      this.aiming = !!(gun && this.zoomOn && !this.reloading && !switching);
+      this.aiming = !!(gun && !(vdef && isHybridMelee(vdef)) && this.zoomOn && !this.reloading && !switching);
       this.scoped = this.aiming && !!s!.def.params.scope && this.time >= this.boltUntil;
     }
     const targetFov = this.aiming && (vdef!.params.scope ? this.scoped : true)

@@ -1,0 +1,21 @@
+{
+  "generated": "2026-11-02T21:33:51.515Z",
+  "sets": [
+    {
+      "ai": "Weapon_P99",
+      "states": {
+        "Idle": {"clip":"p99hak:idle","dur":0.03333333507180214},
+        "Fire": {"clip":"p99hak:attack","dur":0.5333333611488342},
+        "Attack_Hak": {"clip":"p99hak:attack_hak","dur":1.6333333253860474},
+        "LoadMag": {"clip":"p99hak:reload","dur":2}
+      }
+    }
+  ],
+  "models": {"p99_hak": 0},
+  "libs": {
+    "p99hak:idle":"lib/p99_hak.json",
+    "p99hak:attack":"lib/p99_hak.json",
+    "p99hak:attack_hak":"lib/p99_hak.json",
+    "p99hak:reload":"lib/p99_hak.json"
+  }
+}

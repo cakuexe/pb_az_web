@@ -297,7 +297,7 @@ export class Game implements BotHost {
   private changeUntil = 0;
   /** equipped character itemId (RESPAWN 5138), replicated as PlayerState.chara */
   private localChara?: number;
-  /** Gender of our own character, for the voice takes that are gender-split (charSfx: MV_ / WV_ death, CH_Critical).
+  /** Gender of our own character, for the voice takes that are gender-split (charSfx: MV_ / WV_ death).
    *  Same resolveChara fallback the arms / model / radio voice use, so the take always matches what is drawn. */
   private myCharaIsFemale(): boolean {
     return charaIsFemale(this.localChara, this.me.team);
@@ -861,9 +861,9 @@ export class Game implements BotHost {
     // the 3PV flinch (Damage* upper state) — the victim's own client cannot send it back, so whoever lands the hit
     // plays it on the model it sees. Local player has no 3PV body (first-person viewmodel), hence the optional call.
     if (res.dealt > 0) target.playHurt?.(this.hitDir(attacker, target));
-    // head grunt for any victim; CH_Critical + MV_Heart_Beat only for the local victim (0x78cd2d / 0x78cd67)
+    // head grunt for any victim; own grunt + MV_Heart_Beat only for the local victim (0x78cd2d / 0x78cd67)
     if (res.dealt > 0) this.charSfx?.hurt(target.feet(new THREE.Vector3()), zone === "head", target === this.me);
-    if (target === this.me) this.charSfx?.ownHurt(target.feet(new THREE.Vector3()), this.myCharaIsFemale(), target.hp, res.dealt);
+    if (target === this.me) this.charSfx?.ownHurt(target.feet(new THREE.Vector3()), zone === "head", target.hp, res.dealt);
     if (target === this.me && res.dealt > 0) this.pbWeapons()?.blastHurt(weapon);
     if (attacker === this.me) this.hud.hitmarker(res.killed ? "kill" : res.headshot ? "head" : "hit");
     if (res.killed) this.onDeath(target, attacker, weapon, res.headshot);
@@ -2015,7 +2015,7 @@ export class Game implements BotHost {
       if (res.dealt > 0) {
         this.pbWeapons()?.blastHurt(e.weapon);
         this.charSfx?.hurt(this.me.feet(new THREE.Vector3()), e.zone === "head", true);
-        this.charSfx?.ownHurt(this.me.feet(new THREE.Vector3()), this.myCharaIsFemale(), this.me.hp, res.dealt);
+        this.charSfx?.ownHurt(this.me.feet(new THREE.Vector3()), e.zone === "head", this.me.hp, res.dealt);
       }
       if (res.killed) this.onDeath(this.me, attacker, e.weapon, res.headshot);
     });

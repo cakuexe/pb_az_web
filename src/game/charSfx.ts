@@ -91,14 +91,15 @@ export class CharSfx {
     if (head) this.playAt(`CH_Head_Hit_${1 + (Math.random() < 0.5 ? 0 : 1)}`, pos, own);
   }
   /**
-   * The local character took a hit and survived (damage handler 0x78caa0, HP before > damage): a CH_Critical_Male/Female
-   * grunt, 2D (idx 0xc, gender 0x54dc10, call 0x78cd2d; the exe skips it for the Dino/monster classes of 0x4c1420, not
-   * modelled), and MV_Heart_Beat (idx 0xd, no WV_ take, 2D, 0x78cd67 / 0x78c34b) once when the hit takes HP from above 20
-   * into 1..20. One-shot: the exe has no loop for it.
+   * The local character took a hit and survived (damage handler 0x78caa0, HP before > damage): a grunt, 2D. The Cross exe
+   * plays CH_Critical_Male/Female here (idx 0xc, gender 0x54dc10, call 0x78cd2d; it skips the Dino/monster classes of
+   * 0x4c1420, not modelled). [RECRIADO] CH_Thud_1/2 instead, by choice: the 4Game client packs have no CH_Critical.
+   * `head`: hurt() already played the grunt. And MV_Heart_Beat (idx 0xd, no WV_ take, 2D, 0x78cd67 / 0x78c34b) once when
+   * the hit takes HP from above 20 into 1..20. One-shot: the exe has no loop for it.
    */
-  ownHurt(pos: THREE.Vector3, female: boolean, hpAfter: number, dealt: number): void {
+  ownHurt(pos: THREE.Vector3, head: boolean, hpAfter: number, dealt: number): void {
     if (hpAfter <= 0 || dealt <= 0) return;
-    this.playAt(female ? "CH_Critical_Female" : "CH_Critical_Male", pos, true);
+    if (!head) this.playAt(`CH_Thud_${1 + (Math.random() < 0.5 ? 0 : 1)}`, pos, true);
     if (hpAfter + dealt > 20 && hpAfter <= 20) this.playAt("MV_Heart_Beat", pos, true);
   }
   /**

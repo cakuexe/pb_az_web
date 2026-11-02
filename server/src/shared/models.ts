@@ -7,7 +7,7 @@ import { NO_FAKE_RANK, csFloorInt } from "./rank.ts";
 export class PlayerEquipment {
   weaponPrimary = 103004;
   weaponSecondary = 202003;
-  weaponMelee = 301012;
+  weaponMelee = 301001;
   weaponExplosive = 407001;
   weaponSpecial = 508002;
   charaRedId = 601001;

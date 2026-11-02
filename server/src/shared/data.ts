@@ -247,7 +247,7 @@ export function missionCardFlags(missionId: number, progress: Uint8Array): Uint8
 }
 
 export async function loadStaticData(): Promise<void> {
-    await pool.query(`UPDATE system_template_items SET item_id = 202003, name = 'K-5' WHERE kind = 'basic' AND item_id = 202022`); await pool.query(`ALTER TABLE player_equipments ALTER COLUMN weapon_secondary SET DEFAULT 202003`); data.basics = await templateItems("basic", ItemEquipType.Permanent, true);
+    await pool.query(`UPDATE system_template_items SET item_id = 202003, name = 'K-5' WHERE kind = 'basic' AND item_id = 202022`); await pool.query(`UPDATE system_template_items SET item_id = 301001, name = 'M-7' WHERE kind = 'basic' AND item_id = 301012`); await pool.query(`ALTER TABLE player_equipments ALTER COLUMN weapon_secondary SET DEFAULT 202003`); await pool.query(`ALTER TABLE player_equipments ALTER COLUMN weapon_melee SET DEFAULT 301001`); data.basics = await templateItems("basic", ItemEquipType.Permanent, true);
   data.awards = await templateItems("award", ItemEquipType.Durable, false);
   if (data.basics.length === 0) log("WARNING system_template_items(basic) empty: the C# falls back to Data/Temps/Basic.xml (not ported)");
   data.cafes = await loadCafes();

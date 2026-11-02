@@ -345,7 +345,7 @@ export function localTestInventory(
 /** ItemEquipType.Durable (lobby/types.ts): bought but never activated ("Usar" in the inventory), not usable yet */
 const EQUIP_DURABLE = 1;
 /** Server default kit (server shared/playerUtils.ts checkEquipedItems: the reset values). */
-const DEFAULT_KIT: RespawnLoadout = { primary: 103004, secondary: 202003, melee: 301012, grenade: 407001, special: 508002 };
+const DEFAULT_KIT: RespawnLoadout = { primary: 103004, secondary: 202003, melee: 301001, grenade: 407001, special: 508002 };
 /** Ids the server keeps without an inventory item on a respawn (battleRules): basic primary, the battle-rule primaries, the fist. */
 const FREE_LOADOUT_IDS = new Set([103004, 105025, 106007, 323001]);
 

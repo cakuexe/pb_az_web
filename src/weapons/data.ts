@@ -104,7 +104,8 @@ export function buildParams(fam: Family, s: WeaponStat, pb: PbWeaponBlock | unde
       recoilHorzFactor: x.recoilHorzFactor, recoilHorzCount: x.recoilHorzCount, recoilVertCount: x.recoilVertCount },
     fallback: !pb,
   };
-  if (fam === "KNIFE" || hasSecondaryMelee) {
+  const isCicHybrid = s.id === 213001 || s.className === "CIC";
+  if (fam === "KNIFE" || hasSecondaryMelee || isCicHybrid) {
     const k = { ...rep.melee, ...p.melee };
     params.melee = {
       damageA: k.damageA1 ?? s.damage, timeA: k.timeA1 ?? 0.1,
@@ -120,6 +121,10 @@ export function buildParams(fam: Family, s: WeaponStat, pb: PbWeaponBlock | unde
     const dual = s.className === "DualKnife" || s.className === "Knuckle";
     if ((k.timeA2 ?? 0) > 0 && (dual || (auto ?? 1) >= 2)) Object.assign(params.melee, { damageA2: k.damageA2, timeA2: k.timeA2 });
     if ((k.timeB2 ?? 0) > 0 && (dual || (k.autoFireCount2 ?? 1) >= 2)) Object.assign(params.melee, { damageB2: k.damageB2, timeB2: k.timeB2 });
+  }
+  // CIC (P99&HAK): the knife half uses the Hak dummy (75 damage, 0.416 s, 0.9 s cycle).
+  if (isCicHybrid) {
+    params.melee = { damageA: 75, timeA: 0.416, damageB: 75, timeB: 0, delayB: 0.9 };
   }
   if (fam === "GRENADE") {
     const g = { ...rep.grenade, ...p.grenade };

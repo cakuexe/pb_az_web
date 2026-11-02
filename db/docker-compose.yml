@@ -1,0 +1,46 @@
+# Local Postgres for the server (the only service here; the server runs on the host with `npm run dev:all`).
+# Port 5433 on 127.0.0.1 only. The first start of an empty volume runs init/001_init.sql (schema + game data, no accounts).
+# To reset the database: docker compose down -v (removes the volume), then start again.
+# Defaults match server/runtime/Config/Settings.ini [Database] (postgres / postgres). Change them there and in PB_DB_* env if you want.
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${PB_DB_NAME:-pb}
+      POSTGRES_USER: ${PB_DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${PB_DB_PASS:-postgres}
+    ports:
+      - "127.0.0.1:${PB_DB_PORT:-5433}:5432"
+    volumes:
+      - pb-postgres-data:/var/lib/postgresql/data
+      - ./init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PB_DB_USER:-postgres} -d ${PB_DB_NAME:-pb}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # Local TURN relay for browser P2P matches over Tailscale.  Chrome's
+  # peer-to-peer UDP path is not reliable across every NAT/VPN combination;
+  # TURN gives both players a stable relay on the host machine instead.
+  coturn:
+    image: coturn/coturn:4.18.0-r0
+    restart: unless-stopped
+    command:
+      - --no-cli
+      - --log-file=stdout
+      - --lt-cred-mech
+      - --realm=pb-webport.local
+      - --user=pbweb:pbweb-turn-2026
+      - --external-ip=${PB_TAILSCALE_IP:-100.96.26.88}
+      - --min-port=49160
+      - --max-port=49200
+    ports:
+      # Bind only to the private Tailscale adapter, never LAN/public adapters.
+      - "${PB_TAILSCALE_IP:-100.96.26.88}:3478:3478/tcp"
+      - "${PB_TAILSCALE_IP:-100.96.26.88}:3478:3478/udp"
+      - "${PB_TAILSCALE_IP:-100.96.26.88}:49160-49200:49160-49200/udp"
+
+volumes:
+  pb-postgres-data:

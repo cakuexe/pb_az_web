@@ -509,6 +509,8 @@ export class WeaponSystem {
     this.obsNextFire = this.time + Math.max(0.05, def.fireDelay) * 0.8; // one arms shot per weapon cycle (shot events + the firing flag both land here)
     // a stab / throw is not a shot: the knife swings (light / heavy as the remote's fire event says), no kick, no muzzle flash
     if (def.family === "KNIFE") { vm.meleeSwing(heavy, heavy ? def.params.melee?.delayB ?? def.fireDelay : def.fireDelay, !!def.params.melee?.timeA2); return; }
+    // P99&HAK's secondary-fire event is a melee action, even though its inventory family is handgun.
+    if (def.id === 213001 && heavy) { vm.meleeSwing(true, vm.meleeDuration(true) ?? def.fireDelay); return; }
     if (def.family === "GRENADE") { this.observeThrow(def); return; }
     if (def.fireMode === "bolt" && this.scoped) this.obsBoltUntil = this.time + Math.max(def.fireDelay, def.params.loadBulletTime ?? 0);
     vm.fireKick(def.family === "SR" || def.family === "SG" ? 6 : def.family === "HG" ? 3.5 : 2.2, false);
@@ -1596,7 +1598,11 @@ export class WeaponSystem {
     }
     // LMB: FireDelay / AttackTimeA1, RMB: FireDelay2 / AttackTimeB1 (Weapon.pef)
     let interval = heavy ? m?.delayB ?? s.def.fireDelay : s.def.fireDelay;
-    if (heavy && s.def.id === 213001) interval = Math.max(interval, this.viewmodel?.weaponAnimator?.state("attackHak")?.dur ?? 0);
+    if (heavy && s.def.id === 213001) interval = Math.max(
+      interval,
+      this.viewmodel?.meleeDuration(true) ?? 0,
+      this.viewmodel?.weaponAnimator?.state("attackHak")?.dur ?? 0,
+    );
     // the next swing cannot start before this one's hit lands: Knuckle FireDelay 0.1 / A1 0.2, Candy Cane 0.2 / 0.28,
     // Icicles 0.25 / 0.366, Kunai 0.05 / 0.3 would restart (and cut) the clip before its own hit [INFERIDO]
     interval = Math.max(interval, (heavy ? m?.timeB : m?.timeA) ?? 0);

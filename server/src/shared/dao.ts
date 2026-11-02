@@ -172,6 +172,12 @@ export async function loadPlayerEquipments(a: Account): Promise<void> {
   e.partHead = int(x.part_head); e.partFace = int(x.part_face); e.partJacket = int(x.part_jacket); e.partPocket = int(x.part_pocket);
   e.partGlove = int(x.part_glove); e.partBelt = int(x.part_belt); e.partHolster = int(x.part_holster); e.partSkin = int(x.part_skin);
   e.beretItem = int(x.beret_item_part); e.accessoryId = int(x.accesory_id); e.sprayId = int(x.spray_id); e.nameCardId = int(x.namecard_id);
+  // Head, face-mask and beret share one visual slot. Repair legacy rows that stored more than one.
+  if ([e.partHead, e.partFace, e.beretItem].filter(Boolean).length > 1) {
+    if (e.partHead) { e.partFace = 0; e.beretItem = 0; }
+    else if (e.partFace) e.beretItem = 0;
+    await tryExec("Normalize head/face/beret equipment", "UPDATE player_equipments SET part_head=$2, part_face=$3, beret_item_part=$4 WHERE owner_id=$1", [id(a.playerId), e.partHead, e.partFace, e.beretItem]);
+  }
   e.emoticons = [0, 1, 2, 3, 4, 5].map((i) => int(x[`emoticon_${i}`]));
   a.equipment = e;
 }

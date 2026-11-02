@@ -303,9 +303,9 @@ export class Lobby2017 {
     const sel = this.menu.selected;
     const id = sel === null ? 0 : this.page === "inventory" ? s.player.state.inventory.get(sel)?.itemId ?? 0 : this.page === "shop" ? sel : 0;
     const slot = id ? equipSlotOf(id) : null;
-    if (slot === EquipSlot.Head) out.head = id;
-    else if (slot === EquipSlot.Face) out.face = id;
-    else if (slot === EquipSlot.Beret) out.beret = id;
+    if (slot === EquipSlot.Head) { out.head = id; out.face = 0; out.beret = 0; }
+    else if (slot === EquipSlot.Face) { out.face = id; out.head = 0; out.beret = 0; }
+    else if (slot === EquipSlot.Beret) { out.beret = id; out.head = 0; out.face = 0; }
     return out;
   }
 
@@ -1566,12 +1566,12 @@ export class Lobby2017 {
       this.buy = null;
       // bought: ask to use it now; OK equips the new inventory entry [RECRIADO: no STBL string for the question]
       const bought = [...s.player.state.inventory.values()].find((i) => i.itemId === opt.itemId);
-      const text = `${S.buySuccess}\n${itemName(offer.itemId).name}`;
+      const text = `Əşya inventara əlavə edildi.\n${itemName(offer.itemId).name}`;
       if (bought) {
         this.log.push(text.replace("\n", " "));
-        this.msg = { text: `${text}\nDeseja usar este item agora?`, onOk: () => void this.useBought(bought), onCancel: () => {} };
+        this.msg = { text: `${text}\nBu əşyanı indi istifadə etmək istəyirsiniz?`, onOk: () => void this.useBought(bought), onCancel: () => {} };
         this.draw();
-      } else this.say(`${S.buySuccess} ${itemName(offer.itemId).name}`, true);
+      } else this.say(`Əşya inventara əlavə edildi. ${itemName(offer.itemId).name}`, true);
     } catch (e) {
       const code = (e as { code?: number }).code ?? 0;
       b.busy = false;

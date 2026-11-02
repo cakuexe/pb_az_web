@@ -11,6 +11,8 @@ export const RENDER_SCALES = ["70", "100", "native", "150", "200"] as const;
 export type RenderScale = (typeof RENDER_SCALES)[number];
 export const LOBBY_UIS = ["cross"] as const;
 export type LobbyUi = (typeof LOBBY_UIS)[number];
+export const RADIO_LANGUAGES = ["en", "ru", "tr"] as const;
+export type RadioLanguage = (typeof RADIO_LANGUAGES)[number];
 
 export interface GameSettings {
   /** the exe's option value, 0.10..1.20 (default 0.5); rad per mouse count = sensitivity * 0.005 */
@@ -40,6 +42,8 @@ export interface GameSettings {
   uiOn: boolean;
   /** Option > Sound "Mensagem de rádio" (STR_POPUP_RADIO_MESSAGE): incoming radio lines and voices on / off */
   radioMessage: boolean;
+  /** Radio voice pack: English, Russian or Turkish. */
+  radioLanguage: RadioLanguage;
   /** Option > Game "Efeito de texto" (STR_POPUP_DISPLAY_EFFECT): the kill banner text on / off */
   textEffect: boolean;
   /** Vídeo > "Texturas leves" [RECRIADO]: characters / weapons from the 256 px `models_lod` mirror (~10x less download); read when a model is first loaded */
@@ -83,7 +87,7 @@ export const pixelRatioFor = (s: Pick<GameSettings, "renderScale">, dpr: number,
 /** sfxVolume 100 / bgmVolume 60 = the account defaults of the server */
 export const DEFAULT_SETTINGS: GameSettings = {
   sensitivity: MOUSE_SENS_DEFAULT, invertMouse: false, sfxVolume: 100, brightness: 50, fov: PB_FPS_CAMERA.fov, aimSensitivity: 50, showBlood: true,
-  bgmVolume: 60, bgmOn: true, sfxOn: true, uiVolume: 100, uiOn: true, radioMessage: true, textEffect: true, lowTextures: false, renderScale: "100", dynamicRes: true, antialias: true,
+  bgmVolume: 60, bgmOn: true, sfxOn: true, uiVolume: 100, uiOn: true, radioMessage: true, radioLanguage: "tr", textEffect: true, lowTextures: false, renderScale: "100", dynamicRes: true, antialias: true,
   normalMap: true, specularMap: true, reflection: true, rimLight: false, ibl: true, anisotropic: true, ragdoll: false, lobbyUi: "cross", // new players: every Gráficos effect on except Rim Light and the ragdoll (user choice: the ragdoll lagged, 2026-10-12)
 };
 const KEY = "pb.settings";
@@ -127,6 +131,7 @@ function load(): GameSettings {
     delete (saved as { physicsEffects?: boolean }).physicsEffects; // renamed to ragdoll (default off): an old "on" from the first build does not carry over
     if (!RENDER_SCALES.includes(saved.renderScale)) saved.renderScale = "100";
     if (saved.lobbyUi !== undefined && !LOBBY_UIS.includes(saved.lobbyUi)) delete saved.lobbyUi;
+    if (saved.radioLanguage !== undefined && !RADIO_LANGUAGES.includes(saved.radioLanguage)) delete saved.radioLanguage;
     const s = { ...DEFAULT_SETTINGS, ...saved };
     s.sensitivity = sensOk(s.sensitivity);
     return s;

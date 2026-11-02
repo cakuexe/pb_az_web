@@ -2,7 +2,7 @@ import * as THREE from "three";
 import {
   RADIO_ITEMS, RadioMenu, parseRadioId, radioRule, radioSoundFile, radioStringKey, type RadioType,
 } from "../gameplay/pbRadio";
-import { getSettings } from "../gameplay/settings";
+import { getSettings, type RadioLanguage } from "../gameplay/settings";
 import { effectsBus, soundInfo } from "../gameplay/soundMix";
 import { loadClip } from "../audioUrl";
 import { FONTS } from "../lobby/ui/assets.ts";
@@ -17,7 +17,7 @@ import { chat } from "../net/chatClient";
  * no sprite: CHud::<text create> 0x739bd0 (loop at 0x73af8f, nodes this+0x2a4) and the per-frame update 0x747ee0.
  */
 
-const SOUND_BASE = "/assets/sfx/radio/";
+const SOUND_BASE = "/assets/sfx/radio";
 const CHAT_LIFE = 8; // s [RECRIADO]
 const CHAT_MAX = 6;
 
@@ -31,9 +31,10 @@ const ROW_CSS = `position:absolute;left:${ROW_X}px;font:400 10px/1 ${FONTS.hudTe
 /** decoded voices by file, shared by every RadioHud and preloadRadioVoices (match preload): one fetch + decode per file, on three's AudioContext like the other match sounds */
 const loader = new THREE.AudioLoader();
 const clips = new Map<string, Promise<AudioBuffer | null>>();
-function clip(f: string): Promise<AudioBuffer | null> {
-  let p = clips.get(f);
-  if (!p) clips.set(f, (p = loadClip(loader, SOUND_BASE + f).then((b) => b, () => null)));
+function clip(f: string, language: RadioLanguage = getSettings().radioLanguage): Promise<AudioBuffer | null> {
+  const key = `${language}/${f}`;
+  let p = clips.get(key);
+  if (!p) clips.set(key, (p = loadClip(loader, `${SOUND_BASE}/${key}`).then((b) => b, () => null)));
   return p;
 }
 
@@ -44,7 +45,8 @@ export async function preloadRadioVoices(voices: Iterable<"Man" | "Women">): Pro
     for (const t of [0, 1, 2] as const) for (let i = 1; i <= RADIO_ITEMS[t]; i++) files.push(radioSoundFile(t, i, v)!);
     files.push(radioSoundFile(3, 1, v)!);
   }
-  await Promise.all(files.map(clip));
+  const language = getSettings().radioLanguage;
+  await Promise.all(files.map((f) => clip(f, language)));
 }
 
 let stringsP: Promise<Record<string, string>> | null = null;
@@ -118,7 +120,7 @@ export class RadioHud {
   private play(type: RadioType, index: number, voice: "Man" | "Women"): void {
     const f = radioSoundFile(type, index, voice);
     if (!f) return;
-    void clip(f).then((buf) => {
+    void clip(f, getSettings().radioLanguage).then((buf) => {
       if (!buf) return;
       try {
         const ctx = THREE.AudioContext.getContext();

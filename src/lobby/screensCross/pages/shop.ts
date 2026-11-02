@@ -123,6 +123,19 @@ const ITEM_EFFECT_DESCRIPTION: Readonly<Record<number, string>> = {
   1700191: "Xüsusi slota 1 əlavə tüstü və ya işıq qumbarası verir.",
   1700211: "Xüsusi slota 1 əlavə bomba verir.",
 };
+
+/** Keep the real 4Game sprite visible; only cover its baked Russian caption with the Azerbaijani label. */
+function paintClassicShopTab(gui: I3Gui, name: string, selected: boolean): void {
+  const caption = gui.get(name)?.el.querySelector<HTMLElement>(":scope > .pb-shop-caption");
+  const label = caption?.querySelector<HTMLElement>(":scope > span");
+  if (!caption || !label) return;
+  // Pixel stops sampled from the 4Game main_ui_source03 tab cells (selected y=422/452, normal y=452/422).
+  caption.style.background = selected
+    ? "linear-gradient(180deg, #202020 0%, #181818 16%, #2b55a0 36%, #355da5 52%, #335ba4 66%, #144296 82%, #12151b 100%)"
+    : "linear-gradient(180deg, #1d1d1d 0%, #292929 18%, #2d2d2d 38%, #383838 53%, #272727 68%, #161616 83%, #090c10 100%)";
+  label.style.color = selected ? "#f4f6f8" : "#aeb7be";
+}
+
 export class ShopPage {
   private gui: I3Gui;
   private grids: Record<ItemTab, SlotGrid>;
@@ -188,74 +201,50 @@ export class ShopPage {
       shopItemTab: "ƏŞYA",
       shopLeave: "ÇIX",
     };
-    for (const [name, label] of Object.entries(azBakedButtons)) {
-      gui.setText(name, label);
-      const text = gui.get(name)?.el.querySelector<HTMLElement>(":scope > .op-text");
-      if (!text) continue;
-      Object.assign(text.style, {
-        background: "linear-gradient(180deg, rgba(77,80,82,.98), rgba(38,40,42,.98))",
-        border: "1px solid rgba(112,117,121,.9)",
-        color: "#e1e3e4",
-        fontSize: "13px",
-        fontWeight: "700",
-        textShadow: "0 1px 1px #000",
+    gui.setText("shopLeave", azBakedButtons.shopLeave);
+    const leave = gui.get("shopLeave")?.el;
+    if (leave) {
+      for (const old of leave.querySelectorAll<HTMLElement>(":scope > .op-text")) old.style.visibility = "hidden";
+      const cover = document.createElement("span");
+      cover.textContent = azBakedButtons.shopLeave;
+      Object.assign(cover.style, {
+        position: "absolute", inset: "4px 6px", zIndex: "5", display: "grid", placeItems: "center",
+        // Exact blue family of the 4Game main_ui_source01 hover button cell (245,197).
+        background: "linear-gradient(180deg, #222 0%, #2d549c 24%, #345fad 43%, #2c4e8f 63%, #325ba6 82%, #171717 100%)",
+        color: "#e7edf5", font: "700 10px/1 Arial,sans-serif", textShadow: "0 1px 1px #000",
+        pointerEvents: "none",
       });
+      leave.append(cover);
     }
-    // The original pack leaves the Item sub-tab captions baked into a texture on some client versions. Add real
-    // DOM captions and distribute every tab row across the available width so translated labels never leave blank
-    // buttons or a half-empty header at different viewport sizes.
-    const responsiveRows: [string[], Record<string, string>][] = [
-      [["shopWeaponTab", "shopCharaTab", "shopItemTab"], azBakedButtons],
-      [["shopAllWeapon", "shopPrimaryWeapon", "shopSecondaryWeapon", "shopMeleeWeapon", "shopThrowingWeapon", "shopItemWeapon"], azLabels],
-      [["shopAllCharacter", "shopTypeCharacter", "shopHairCharacter"], azLabels],
-      [["shopItemAllGroup", "shopItemMaintenanceGroup", "shopItemExpendableGroup"], azLabels],
-    ];
-    const fitRow = (names: string[], labels: Record<string, string>) => {
-      const els = names.map((n) => gui.get(n)?.el).filter((e): e is HTMLElement => !!e);
-      if (els.length !== names.length || !els[0].parentElement || !els.every((e) => e.parentElement === els[0].parentElement)) return;
-      const parent = els[0].parentElement as HTMLElement;
-      const ownWidth = parent.clientWidth || Number.parseFloat(parent.style.width);
-      // The old i3 pack declares section containers as 32 px even though their children span the 556 px shop
-      // window. In that case the real layout width is the shop window, not the placeholder parent width.
-      const win = gui.get("shopWin")?.el;
-      const windowWidth = win?.clientWidth || Number.parseFloat(win?.style.width ?? "0");
-      const parentWidth = ownWidth < 100 && windowWidth > ownWidth ? windowWidth : ownWidth;
-      if (!(parentWidth > 0)) return;
-      const oldLeft = els.map((e) => Number.parseFloat(e.style.left) || e.offsetLeft);
-      const left = Math.max(0, Math.min(...oldLeft));
-      const rightPad = Math.max(8, left);
-      const gap = 6;
-      const width = (parentWidth - left - rightPad - gap * (els.length - 1)) / els.length;
-      if (!(width > 30)) return;
-      els.forEach((el, i) => {
-        el.style.left = `${left + i * (width + gap)}px`;
-        el.style.width = `${width}px`;
-        el.style.boxSizing = "border-box";
-        // A number of controls already have an i3-generated caption. It must be hidden before the responsive
-        // caption is added, otherwise the translated text is painted twice (e.g. SİLAHSİLAH).
-        for (const old of el.querySelectorAll<HTMLElement>(":scope > .op-text")) old.style.visibility = "hidden";
-        let caption = el.querySelector<HTMLElement>(":scope > .pb-shop-caption");
-        if (!caption) {
-          caption = document.createElement("span");
-          caption.className = "pb-shop-caption";
-          el.append(caption);
-        }
-        caption.textContent = labels[names[i]] ?? "";
-        Object.assign(caption.style, {
-          position: "absolute", inset: "0", display: "grid", placeItems: "center", zIndex: "5",
-          background: "linear-gradient(180deg, #3b4652 0%, #242b33 55%, #171c22 100%)",
-          border: "1px solid #435a70", boxSizing: "border-box",
-          color: "#f1f3f5", fontSize: "12px", fontWeight: "700", lineHeight: "1.05", textAlign: "center",
-          textShadow: "0 1px 2px #000", pointerEvents: "none", whiteSpace: "normal", padding: "0 4px",
-        });
+    const topTabs = ["shopWeaponTab", "shopCharaTab", "shopItemTab"];
+    const shopWidth = Number.parseFloat(gui.get("shopWin")?.el.style.width ?? "0") || 556;
+    const tabLeft = 15, tabGap = 6, tabRight = 15;
+    const tabWidth = (shopWidth - tabLeft - tabRight - tabGap * (topTabs.length - 1)) / topTabs.length;
+    for (const [index, name] of topTabs.entries()) {
+      const control = gui.get(name)?.el;
+      if (!control) continue;
+      const sourceWidth = Number.parseFloat(control.style.width) || control.offsetWidth || 120;
+      control.style.left = `${tabLeft + index * (tabWidth + tabGap)}px`;
+      control.style.width = `${tabWidth}px`;
+      for (const sprite of control.querySelectorAll<HTMLElement>(":scope > .i3-sprite")) {
+        sprite.style.transformOrigin = "0 0";
+        sprite.style.transform = `scaleX(${tabWidth / sourceWidth})`;
+      }
+      for (const old of control.querySelectorAll<HTMLElement>(":scope > .op-text")) old.style.visibility = "hidden";
+      const caption = document.createElement("span");
+      const label = document.createElement("span");
+      caption.className = "pb-shop-caption";
+      label.textContent = azBakedButtons[name];
+      Object.assign(caption.style, {
+        position: "absolute", inset: "3px 6px", display: "grid", placeItems: "center", zIndex: "5", pointerEvents: "none",
+        background: "linear-gradient(180deg, #1d1d1d 0%, #292929 18%, #2d2d2d 38%, #383838 53%, #272727 68%, #161616 83%, #090c10 100%)",
       });
-    };
-    const fitResponsiveRows = () => responsiveRows.forEach(([names, labels]) => fitRow(names, labels));
-    requestAnimationFrame(fitResponsiveRows);
-    const shopWindow = gui.get("shopWin")?.el;
-    if (shopWindow && typeof ResizeObserver !== "undefined") {
-      const observer = new ResizeObserver(fitResponsiveRows);
-      observer.observe(shopWindow);
+      Object.assign(label.style, {
+        font: "700 10px/1 Arial,sans-serif", letterSpacing: ".04em",
+        color: "#aeb7be", textShadow: "0 1px 1px #000",
+      });
+      caption.append(label);
+      control.append(caption);
     }
     const c = ctx.ctl;
     const offers = () => (c.session ? shopOffers(c.session.shop, c.menu) : []);
@@ -382,7 +371,11 @@ export class ShopPage {
     for (const t of Object.keys(TAB_BUTTON) as ItemTab[]) {
       gui.show(SECTION[t], t === tab);
       setTab(gui, TAB_BUTTON[t], t === tab);
-      for (const [btn, f] of FILTERS[t]) gui.setState(btn, t === tab && f === ui.filter ? 2 : 0);
+      paintClassicShopTab(gui, TAB_BUTTON[t], t === tab);
+      for (const [btn, f] of FILTERS[t]) {
+        const selected = t === tab && f === ui.filter;
+        gui.setState(btn, selected ? 2 : 0);
+      }
     }
     // the grid: name, the owned term / "Não possui", the currency labels
     const list = shopOffers(s.shop, ui), grid = this.grids[tab], inv = [...s.player.state.inventory.values()];

@@ -324,6 +324,15 @@ test("(b) loadout: the RESPAWN's items (by name group), Dual swap, defaults and 
   assert.equal(b.hits(1, { victim: 0, damage: 100, weapon: CHEYTAC }).length, 1, "slot 2's dropped Cheytac, picked up");
 });
 
+test("(b) imported Barrett shop variants use the base M82A1 stats and hit group", () => {
+  const BARRETT = 105032, BARRETT_BLACK = 105268, BARRETT_RED = 105272;
+  const b = new Bench();
+  b.join(0); b.join(1, { primary: BARRETT_BLACK }); b.join(2, { primary: BARRETT_RED });
+  assert.equal(b.hits(1, { victim: 0, damage: 200, weapon: BARRETT }).length, 1, "Black variant hit named as base Barrett");
+  assert.equal(b.hits(1, { victim: 0, damage: 200, weapon: BARRETT_BLACK }).length, 1, "Black variant item id");
+  assert.equal(b.hits(2, { victim: 0, damage: 200, weapon: BARRETT_RED }).length, 1, "Red variant item id");
+});
+
 test("(b) Champion Claymore 407113 has its own ItemStatistics row: its grenade hits pass in the explosive slot, over-damage is dropped", () => {
   const CHAMPION = 407113;
   assert.equal(ST[CHAMPION]?.damage, 65, "row of the 2017 base 407023");

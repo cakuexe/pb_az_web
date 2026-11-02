@@ -341,22 +341,30 @@ export class PbHud {
   private async loadAnnounce(assetsBase: string): Promise<void> {
     const idx = await json<{ files: Record<string, string> } | null>(`${assetsBase}/sfx/announce/announce.json`, null);
     this.announceFiles = idx?.files ?? null;
-    for (const [id, rel] of Object.entries(this.announceFiles ?? {})) {
-      if (this.announceAudio.has(id)) continue;
-      const a = newAudio(`${assetsBase}/sfx/announce/${rel}`);
+    for (const language of ["en", "ru", "tr"] as const) for (const [id, rel] of Object.entries(this.announceFiles ?? {})) {
+      const key = `${language}:${id}`;
+      if (this.announceAudio.has(key)) continue;
+      const file = rel.split("/").pop()!;
+      const a = newAudio(`${assetsBase}/sfx/announce/${language}/${file}`);
       a.preload = "auto";
-      this.announceAudio.set(id, a);
+      this.announceAudio.set(key, a);
     }
     // a gauge change applies to a line already playing too (the battle's ESC Configuração is live)
-    this.unsubAnnounceVolume ??= onSettings((st) => { for (const [id, a] of this.announceAudio) a.volume = this.announceLevel(id, st); });
+    this.unsubAnnounceVolume ??= onSettings((st) => { for (const [key, a] of this.announceAudio) a.volume = this.announceLevel(key.split(":").pop()!, st); });
   }
 
   /** MV_Ann_*.wav / UI_HUD_Revenge_Effect.wav (pb-extract-tools export-announce2017.mjs), 2D one-shot, no positional audio. */
   private playAnnounce(id: string): void {
     const rel = this.announceFiles?.[id];
     if (!rel) return;
-    let a = this.announceAudio.get(id);
-    if (!a) { a = newAudio(`${UI_BASE.replace(/\/ui$/, "")}/sfx/announce/${rel}`); this.announceAudio.set(id, a); }
+    const language = getSettings().radioLanguage;
+    const key = `${language}:${id}`;
+    let a = this.announceAudio.get(key);
+    if (!a) {
+      const file = rel.split("/").pop()!;
+      a = newAudio(`${UI_BASE.replace(/\/ui$/, "")}/sfx/announce/${language}/${file}`);
+      this.announceAudio.set(key, a);
+    }
     else a.currentTime = 0;
     a.volume = this.announceLevel(id);
     void a.play().catch(() => {});
@@ -568,6 +576,13 @@ export class PbHud {
       return el;
     };
     const els = [sprite(box.top, P.top.src), sprite(box.mid, P.mid.src), sprite(box.bottom, P.bottom.src)];
+    // The classic 4Game texture has its title baked in Russian. Cover only that text area and retain the old frame art.
+    const title = document.createElement("div");
+    title.className = "tx";
+    title.style.cssText = `left:${P.x + 9}px;top:${P.top.y + 5}px;width:${P.w - 18}px;height:19px;line-height:19px;` +
+      `background:rgba(42,40,34,.96);text-align:center;color:#d9c894;font:bold 12px/${19}px ${HUD_FONT};`;
+    title.textContent = "Tapşırıqlar";
+    els.push(title);
     for (const r of box.rows) {
       els.push(sprite(r.icon, r.src));
       for (const l of r.lines) {

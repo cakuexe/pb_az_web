@@ -1345,7 +1345,12 @@ export class MatchCore {
     return hitType(hitIndex) === ObjectType.Object && !room.getObject(objectId)?.model;
   }
 
-  private groupOf(id: number): number { return this.data.weaponGroup?.[id] ?? id; }
+  private groupOf(id: number): number {
+    // These shop variants reuse Barrett M82A1's 2017 weapon block. They are absent from the
+    // extracted MatchData table, otherwise loadout validation drops their P2P hit packets.
+    const builtInAlias: Readonly<Record<number, number>> = { 105082: 105032, 105268: 105032, 105272: 105032 };
+    return this.data.weaponGroup?.[id] ?? builtInAlias[id] ?? id;
+  }
   /** itemStats of an item, or of its name group's first id (a legacy WEAPON_IDS id, battle.ts) */
   private statsOf(id: number): ItemStat | undefined {
     const s = this.data.itemStats;

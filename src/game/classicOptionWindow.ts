@@ -12,7 +12,7 @@ import { I3Gui, cloneNode as clone, findNode as find, relayout, renameTree, type
 import { loadStrings } from "../lobby/ui/i18n.ts";
 import { jsonOnce } from "../jsonOnce.ts";
 import { CROSSHAIR, CROSSHAIR_COLORS, type CrosshairType, crosshairShape } from "./pbHud/layout.ts";
-import { DEFAULT_SETTINGS, type GameSettings, crosshairIndex, setCrosshairIndex, crosshairType, setCrosshairType, RENDER_SCALES, type RenderScale, LOBBY_UIS, type LobbyUi, LOBBY_UI_AT_LOAD, getSettings, MOUSE_SENS_MAX, MOUSE_SENS_MIN, MOUSE_SENS_STEP, saveSettings } from "../gameplay/settings.ts";
+import { DEFAULT_SETTINGS, type GameSettings, crosshairIndex, setCrosshairIndex, crosshairType, setCrosshairType, RENDER_SCALES, type RenderScale, LOBBY_UIS, type LobbyUi, LOBBY_UI_AT_LOAD, getSettings, MOUSE_SENS_MAX, MOUSE_SENS_MIN, MOUSE_SENS_STEP, saveSettings, RADIO_LANGUAGES, type RadioLanguage } from "../gameplay/settings.ts";
 import { PB_FPS_CAMERA } from "../gameplay/pbConfig.ts";
 import { isFullscreen, toggleFullscreen } from "../ui/fullscreen.ts";
 import { playUiClick, playUiSound, UI_CLICK_OK, UI_CLICK_CANCEL } from "../ui/uiClick.ts";
@@ -329,6 +329,7 @@ export class ClassicOptionWindow {
     this.wireCombo("opInterfaceRadar", LOBBY_UIS, LOBBY_LABEL, (s) => s.lobbyUi, (s, v) => (s.lobbyUi = v));
     this.wireLobbyNote();
     for (const v of VOLUMES) this.wireVolume(v);
+    this.wireRadioLanguage();
     for (const g of GAUGES) this.wireGauge(g);
     window.addEventListener("keydown", (e) => {
       if (!this.opened || e.code !== "Escape") return;
@@ -339,6 +340,28 @@ export class ClassicOptionWindow {
       setCrosshairIndex(this.colorSnapshot);
       this.close();
     }, { signal: this.abort.signal, capture: true });
+  }
+
+  /** Radio voice language selector. The original combo is not usable in the web layout, so this is drawn in its Sound section. */
+  private wireRadioLanguage(): void {
+    const sect = this.byName.get("opSoundSect");
+    if (!sect) return;
+    const label = document.createElement("div");
+    label.className = "op-text";
+    label.textContent = "Radio dili";
+    label.style.cssText = `position:absolute;left:22px;top:322px;height:22px;line-height:22px;font:bold 11px ${FONTS.popup};color:#c9ced6;`;
+    const select = document.createElement("select");
+    const names: Record<RadioLanguage, string> = { en: "İngilis", ru: "Rus", tr: "Türk" };
+    for (const value of RADIO_LANGUAGES) {
+      const option = document.createElement("option");
+      option.value = value; option.textContent = names[value];
+      select.appendChild(option);
+    }
+    select.style.cssText = `position:absolute;left:126px;top:322px;width:126px;height:23px;box-sizing:border-box;border:1px solid #356184;background:#111b27;color:#e6ebf1;font:bold 11px ${FONTS.popup};outline:none;`;
+    select.addEventListener("click", (e) => e.stopPropagation());
+    select.addEventListener("change", () => this.commit((s) => (s.radioLanguage = select.value as RadioLanguage)));
+    sect.el.append(label, select);
+    this.refreshers.push(() => (select.value = getSettings().radioLanguage));
   }
 
   /** one BGM / effects row, see VOLUMES */

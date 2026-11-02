@@ -26,6 +26,8 @@ const FALLBACK_STATS: WeaponStat[] = [
  */
 export const WEAPON_STAT_ALIASES: Readonly<Record<number, number>> = {
   105082: 105032, // Barrett M82A1 event/P variant -> Barrett
+  105268: 105032, // Barrett M821A1 Black (shop/imported asset) -> Barrett
+  105272: 105032, // Barrett Red -> Barrett
 };
 
 // Family-level values with no pef source. fireMode is only used when the pef has no AutoFireCount.

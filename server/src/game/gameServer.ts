@@ -341,11 +341,20 @@ async function handleChangeEquip(c: GameClient, raw: Uint8Array): Promise<void> 
       const weaponCols = ["weapon_primary", "weapon_secondary", "weapon_melee", "weapon_explosive", "weapon_special"];
       weapons.forEach((id, i) => { if (inv.getItem(id) && e[weaponKeys[i]] !== id) { e[weaponKeys[i]] = id; cols.push(weaponCols[i]); vals.push(id); } });
       // cosmetic parts (head/face/jacket/pocket/glove/belt/holster/skin): 0 clears the slot, like beret below
-      const parts = [pairs[9], pairs[10], pairs[11], pairs[12], pairs[13], pairs[14], pairs[15], pairs[16]];
+      const parts = [pairs[9], pairs[10], pairs[11], pairs[12], pairs[13], pairs[14], pairs[15], pairs[16]].map(real);
       const partKeys = ["partHead", "partFace", "partJacket", "partPocket", "partGlove", "partBelt", "partHolster", "partSkin"] as const;
       const partCols = ["part_head", "part_face", "part_jacket", "part_pocket", "part_glove", "part_belt", "part_holster", "part_skin"];
-      parts.forEach((id, i) => { const v = real(id); if (e[partKeys[i]] !== v) { e[partKeys[i]] = v; cols.push(partCols[i]); vals.push(v); } });
-      if (e.beretItem !== pairs[17]) { e.beretItem = real(pairs[17]); cols.push("beret_item_part"); vals.push(e.beretItem); }
+      let beret = real(pairs[17]);
+      const headWasEquipped = parts[0] !== 0 && parts[0] !== e.partHead;
+      const faceWasEquipped = parts[1] !== 0 && parts[1] !== e.partFace;
+      const beretWasEquipped = beret !== 0 && beret !== e.beretItem;
+      if (headWasEquipped) { parts[1] = 0; beret = 0; }
+      else if (faceWasEquipped) { parts[0] = 0; beret = 0; }
+      else if (beretWasEquipped) { parts[0] = 0; parts[1] = 0; }
+      else if (parts[0]) { parts[1] = 0; beret = 0; } // normalize old invalid loadouts: head wins
+      else if (parts[1]) beret = 0; // face wins over beret
+      parts.forEach((v, i) => { if (e[partKeys[i]] !== v) { e[partKeys[i]] = v; cols.push(partCols[i]); vals.push(v); } });
+      if (e.beretItem !== beret) { e.beretItem = beret; cols.push("beret_item_part"); vals.push(e.beretItem); }
       await dao.updateDB("player_equipments", "owner_id", p.playerId, cols, vals);
     }
     if (changedItems) {

@@ -42,16 +42,16 @@ export interface KillMarkDef { id: KillMarkId; caption: string; sound: KillMarkI
 
 export const KILL_MARKS: Record<KillMarkId, KillMarkDef> = {
   kill: { id: "kill", caption: "", sound: "kill", duration: 1.0 },
-  headshot: { id: "headshot", caption: "HEADSHOT", sound: "headshot", duration: 1.4, sprite: { x: 532, y: 202, w: 485, h: 89 } },
-  piercing: { id: "piercing", caption: "PIERCING KILL", sound: "piercing", duration: 1.4, sprite: { x: 532, y: 303, w: 485, h: 90 } },
-  doubleKill: { id: "doubleKill", caption: "DOUBLE KILL", sound: "doubleKill", duration: 1.6, sprite: { x: 16, y: 104, w: 486, h: 90 } },
-  tripleKill: { id: "tripleKill", caption: "TRIPLE KILL", sound: "tripleKill", duration: 1.8, sprite: { x: 17, y: 202, w: 485, h: 90 } },
-  massKill: { id: "massKill", caption: "MASS KILL", sound: "massKill", duration: 2.0, sprite: { x: 532, y: 4, w: 485, h: 83 } },
-  chainKiller: { id: "chainKiller", caption: "CHAIN KILLER", sound: "chainKiller", duration: 1.8, sprite: { x: 15, y: 5, w: 485, h: 82 } },
-  chainStopper: { id: "chainStopper", caption: "CHAIN STOPPER", sound: "chainStopper", duration: 2.2, sprite: { x: 532, y: 103, w: 485, h: 90 } },
+  headshot: { id: "headshot", caption: "BAŞDAN VURUŞ", sound: "headshot", duration: 1.4, sprite: { x: 532, y: 202, w: 485, h: 89 } },
+  piercing: { id: "piercing", caption: "DƏLİB KEÇƏN VURUŞ", sound: "piercing", duration: 1.4, sprite: { x: 532, y: 303, w: 485, h: 90 } },
+  doubleKill: { id: "doubleKill", caption: "İKİLİ ÖLDÜRMƏ", sound: "doubleKill", duration: 1.6, sprite: { x: 16, y: 104, w: 486, h: 90 } },
+  tripleKill: { id: "tripleKill", caption: "ÜÇLÜ ÖLDÜRMƏ", sound: "tripleKill", duration: 1.8, sprite: { x: 17, y: 202, w: 485, h: 90 } },
+  massKill: { id: "massKill", caption: "KÜTLƏVİ ÖLDÜRMƏ", sound: "massKill", duration: 2.0, sprite: { x: 532, y: 4, w: 485, h: 83 } },
+  chainKiller: { id: "chainKiller", caption: "ÖLDÜRMƏ SERİYASI", sound: "chainKiller", duration: 1.8, sprite: { x: 15, y: 5, w: 485, h: 82 } },
+  chainStopper: { id: "chainStopper", caption: "SERİYA DAYANDIRILDI", sound: "chainStopper", duration: 2.2, sprite: { x: 532, y: 103, w: 485, h: 90 } },
   // kill_message.i3i cell 6 (col 0, row 3): CChainKills::_SetSpriteKillMessage 0x7bb1f0, ckType 3
-  chainSlugger: { id: "chainSlugger", caption: "CHAIN SLUGGER", sound: "chainSlugger", duration: 1.8, sprite: { x: 16, y: 306, w: 486, h: 90 } },
-  chainHeadshot: { id: "chainHeadshot", caption: "CHAIN HEADSHOT", sound: "chainHeadshot", duration: 2.0, sprite: { x: 17, y: 410, w: 485, h: 90 } },
+  chainSlugger: { id: "chainSlugger", caption: "ARDICIL ZƏRBƏ", sound: "chainSlugger", duration: 1.8, sprite: { x: 16, y: 306, w: 486, h: 90 } },
+  chainHeadshot: { id: "chainHeadshot", caption: "ARDICIL BAŞDAN VURUŞ", sound: "chainHeadshot", duration: 2.0, sprite: { x: 17, y: 410, w: 485, h: 90 } },
   // no sprite cell in kill_message.i3i, and the exe's 6 flavoured STR_INGAME_HUD_REVENGE_* caption strings were
   // never dumped (no real text to show) — voice only (UI_HUD_Revenge_Effect.wav IS exe-verified), no banner.
   revenge: { id: "revenge", caption: "", sound: "revenge", duration: 1.8 },
@@ -59,9 +59,9 @@ export const KILL_MARKS: Record<KillMarkId, KillMarkDef> = {
   // Protection" cell of kill_message.i3i (right column, 5th row; 1px transparent margin, see helmet.smoke.node.ts)
   helmetProtection: { id: "helmetProtection", caption: "", sound: "helmetProtection", duration: 1.0, sprite: { x: 540, y: 428, w: 472, h: 52 } },
   // mission flow banners (kill_message1.i3i) — these are played by game.ts on match start/end, not by killmarks logic
-  missionStart: { id: "missionStart", caption: "MISSION START", sound: "missionStart", duration: 2.0, sprite: { x: 558, y: 21, w: 433, h: 59, sheet: 1 } },
-  missionSuccess: { id: "missionSuccess", caption: "MISSION SUCCESS", sound: "missionSuccess", duration: 2.0, sprite: { x: 27, y: 123, w: 433, h: 59, sheet: 1 } },
-  gameOver: { id: "gameOver", caption: "GAME OVER", sound: "gameOver", duration: 2.0, sprite: { x: 551, y: 120, w: 433, h: 59, sheet: 1 } },
+  missionStart: { id: "missionStart", caption: "DÖYÜŞ BAŞLADI", sound: "missionStart", duration: 2.0, sprite: { x: 558, y: 21, w: 433, h: 59, sheet: 1 } },
+  missionSuccess: { id: "missionSuccess", caption: "MİSSİYA UĞURLUDUR", sound: "missionSuccess", duration: 2.0, sprite: { x: 27, y: 123, w: 433, h: 59, sheet: 1 } },
+  gameOver: { id: "gameOver", caption: "DÖYÜŞ BİTDİ", sound: "gameOver", duration: 2.0, sprite: { x: 551, y: 120, w: 433, h: 59, sheet: 1 } },
   // Bomb Mission (MV_Ann_Bomb_Plated / _Exploded / _Removed, exe string table): voice only, no text (no banner cell is known and the
   // STBL_IDX_BOMB_MISSION_* strings are not confirmed as on-screen banners)
   bombPlanted: { id: "bombPlanted", caption: "", sound: "bombPlanted", duration: 2.0 },

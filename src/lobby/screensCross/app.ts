@@ -1834,11 +1834,11 @@ export class LobbyScreenCross {
       ],
     };
     gui.build(win, this.stage.design, Math.trunc((1024 - win.w) / 2), Math.trunc((768 - win.h) / 2));
-    gui.setText("cxMsgCaption", this.textOf("cxMsgCaption") ?? "");
+    gui.setText("cxMsgCaption", "Bildiriş");
     gui.setText("cxMsgMessage", text);
     for (const name of ["cxMsgConfirm", "cxMsgCancel"]) {
       if (!gui.get(name)) continue;
-      gui.setText(name, this.textOf(name) ?? "");
+      gui.setText(name, name === "cxMsgConfirm" ? "TƏSDİQ" : "LƏĞV ET");
       const [pl, ctl] = CROSS_CLICK[name], snd = CROSS_SOUND[name];
       gui.button(name, () => { if (snd) playUiSound(snd); this.ctl.click(pl, ctl); });
     }

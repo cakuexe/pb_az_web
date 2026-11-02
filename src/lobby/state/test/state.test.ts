@@ -128,6 +128,23 @@ test("6150 applies the 6149 like the server: weapons only if owned, chara only b
   assert.deepEqual(s2.charaSlots, p.state.loadout!.charaSlots);
 });
 
+test("head item and beret are mutually exclusive in equipment requests", () => {
+  const p = loggedIn();
+  const lo = p.state.loadout!;
+  const head = equipRequestFromLoadout(lo, { [EquipSlot.Head]: { itemId: 700001, objectId: 1 } }, p.state.charaInfo!);
+  assert.equal(head.equip![EquipSlot.Head].itemId, 700001);
+  assert.equal(head.equip![EquipSlot.Face].itemId, 0);
+  assert.equal(head.equip![EquipSlot.Beret].itemId, 0);
+  const face = equipRequestFromLoadout(lo, { [EquipSlot.Face]: { itemId: 800001, objectId: 3 } }, p.state.charaInfo!);
+  assert.equal(face.equip![EquipSlot.Face].itemId, 800001);
+  assert.equal(face.equip![EquipSlot.Head].itemId, 0);
+  assert.equal(face.equip![EquipSlot.Beret].itemId, 0);
+  const beret = equipRequestFromLoadout(lo, { [EquipSlot.Beret]: { itemId: 2700001, objectId: 2 } }, p.state.charaInfo!);
+  assert.equal(beret.equip![EquipSlot.Beret].itemId, 2700001);
+  assert.equal(beret.equip![EquipSlot.Head].itemId, 0);
+  assert.equal(beret.equip![EquipSlot.Face].itemId, 0);
+});
+
 test("MetaSession.charaRequest refuses duplicated slots and keeps the other side", () => {
   const s = new MetaSession(loggedIn());
   const ci = s.player.state.charaInfo!;

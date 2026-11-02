@@ -338,7 +338,13 @@ export function unsavedCharas(info: CharaInfo): CharaSlot[] {
  * Without 2453, or when 3082 did not list both sides, both sides are sent as KEEP_CHARA_SLOT.
  */
 export function equipRequestFromLoadout(current: Loadout, set: Partial<Record<number, EquipPair>>, charas?: CharaInfo): CharChangeEquipRequest {
-  const equip = current.equip.map((p, i) => set[i] ?? p);
+  const next = { ...set };
+  // Head, face-mask and beret items occupy the same visual head space in this client.
+  // Equipping one explicitly clears the other two in the same 6149 request.
+  if (set[EquipSlot.Head]?.itemId) { next[EquipSlot.Face] = zeroPair(); next[EquipSlot.Beret] = zeroPair(); }
+  if (set[EquipSlot.Face]?.itemId) { next[EquipSlot.Head] = zeroPair(); next[EquipSlot.Beret] = zeroPair(); }
+  if (set[EquipSlot.Beret]?.itemId) { next[EquipSlot.Head] = zeroPair(); next[EquipSlot.Face] = zeroPair(); }
+  const equip = current.equip.map((p, i) => next[i] ?? p);
   for (const i of [5, 6, 7]) equip[i] = zeroPair();
   const safe = (slot: number) => (charas && charas.charas.filter((c) => c.slot === slot).length === 1 ? slot : KEEP_CHARA_SLOT);
   const [red, blue] = current.charaSlots;

@@ -63,7 +63,7 @@ class FakeConn {
 const tick = () => new Promise((r) => setTimeout(r, 10));
 const FAIL_TEXT = "Não é possível equipar\n1050: erro 0x80000000";
 
-/** buy one cash use item in the shop (SBN_Buy), then answer the "Deseja usar este item agora?" box with OK */
+/** buy one cash use item in the shop (SBN_Buy), then answer the Azerbaijani "use now?" box with OK */
 async function buyThenUse(itemId: number, objectId: number, cosmetic: ((it: { itemId: number }) => boolean) | null) {
   const conn = new FakeConn();
   const ctl = new Lobby2017({ serverUrl: "", username: "tester", token: new Uint8Array(), render: () => {}, onBattle() {}, onExit() {}, onLocalPlay() {} });
@@ -88,7 +88,7 @@ async function buyThenUse(itemId: number, objectId: number, cosmetic: ((it: { it
 {
   const seen: number[] = [];
   const { conn, box } = await buyThenUse(1800006, 7001, (it) => { seen.push(it.itemId); return true; });
-  check("nick colour: the use-now box asks after the purchase", !!box && box.text.includes("Deseja usar este item agora?"));
+  check("nick colour: the use-now box asks after the purchase", !!box && box.text.includes("Bu əşyanı indi istifadə etmək istəyirsiniz?"));
   check("nick colour: use now goes to the cosmetic hook with the bought item", seen.length === 1 && seen[0] === 1800006);
   check("nick colour: no 1050 is sent (the inventory's Usar never activates it)", !conn.sent.some((x) => x.op === 1050));
 }

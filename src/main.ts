@@ -7,7 +7,6 @@ import { buildTestLevel } from "./testLevel";
 import { buildRealLevel } from "./realLevel";
 import { setCompressedTextureSupport } from "./render/compressedTex";
 import { assetExists } from "./assetProbe";
-import { PB_KEYS } from "./game/keymap";
 import { AssetPaths, CurrentMap, MAP_LABELS, setCurrentMap, type MapId } from "./config";
 import type { LevelBuildResult } from "./testLevel";
 import { setBattleProgress } from "./game/battleLoading";
@@ -249,18 +248,10 @@ export async function startGame(opts: StartGameOptions = {}): Promise<GameHandle
     renderer.setSize(window.innerWidth, window.innerHeight);
   }, { signal });
 
-  const row = (k: string, t: string) => `<div class="ov-row"><span class="ov-key">${k}</span><span>${t}</span></div>`;
-  const kn = (a: keyof typeof PB_KEYS) => PB_KEYS[a][0].replace(/^(Key|Digit)/, "").replace(/(Left|Right)$/, "").replace("Control", "Ctrl").replace("Space", "Espaço");
-  blocker.innerHTML =
-    `<div class="ov-panel"><div class="ov-logo"><img src="/assets/ui/cross/brand/logo.png" alt="Project Blackout" draggable="false"></div>` +
-    `<div class="ov-meta"><span>${MAP_LABELS[map]}</span><span class="ov-sep">·</span><span>${opts.match?.mode === "BOMB" ? "Bomba" : "Mata-mata"}</span></div>` +
-    `<button class="ov-play" type="button">Clique para jogar</button><div class="ov-controls">` +
-    `<div class="ov-group"><h3>Movimento</h3>${row("WASD", "Mover")}${row(kn("walk"), "Andar (silencioso)")}${row(kn("crouch"), "Agachar")}${row(kn("jump"), "Pular")}</div>` +
-    `<div class="ov-group"><h3>Combate</h3>${row("Bot. esq.", "Atirar")}${row("Bot. dir.", "Mirar")}${row(kn("reload"), "Recarregar")}${row(kn("drop"), "Largar arma")}</div>` +
-    `<div class="ov-group"><h3>Armas</h3>${row("1-5", "Selecionar")}${row("Roda", "Trocar")}${row(kn("lastWeapon"), "Última arma")}${row(kn("extension"), "Extensão (laser)")}</div>` +
-    `<div class="ov-group"><h3>Interface</h3>${row("Tab", "Placar")}${row("Esc", "Menu")}${row("Enter", "Chat")}${row(PB_KEYS.radio.map((c) => c.slice(3)).join(" "), "Rádio")}</div></div>` +
-    (opts.onLeave ? `<button id="pbleave" class="ov-leave" type="button">Sair da partida</button>` : "") + `</div>`;
-  blocker.classList.remove("hidden");
+  // The old web-only controls card blocked the match until an extra click. The canvas itself
+  // still acquires pointer lock on the player's first click, so no full-screen card is needed.
+  blocker.replaceChildren();
+  blocker.classList.add("hidden");
 
   const input = new Input(document.body);
   const game = await Game.create({

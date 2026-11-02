@@ -146,7 +146,7 @@ export function userEquipmentAck(r: RoomModel, s: SlotModel | null): Uint8Array 
   return w.writeC(2).writeD(e.charaRedId).writeD(e.charaBlueId).writeC(s.id).toBytes();
 }
 
-const WEAPON_DEFAULTS = [103004, 202003, 301012, 407001, 508002];
+const WEAPON_DEFAULTS = [103004, 202003, 301001, 407001, 508002];
 const safeWeapon = (id: number, c: number) => (id && Math.trunc(id / 100000) % 100 === c ? id : WEAPON_DEFAULTS[c - 1]);
 const safePart = (id: number, c: number) => (id && Math.trunc(id / 100000) % 100 === c ? id : 1000000000 + c * 100000);
 

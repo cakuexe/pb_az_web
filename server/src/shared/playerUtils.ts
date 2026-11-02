@@ -203,7 +203,7 @@ export function checkEquipedItems(e: PlayerEquipment, inv: ItemsModel[], battleR
   if (!f[18] || !f[19] || !f[20]) num += 3;
   if (!f[1]) e.weaponPrimary = 103004;
   if (!f[2]) e.weaponSecondary = 202003;
-  if (!f[3]) e.weaponMelee = 301012;
+  if (!f[3]) e.weaponMelee = 301001;
   if (!f[4]) e.weaponExplosive = 407001;
   if (!f[5]) e.weaponSpecial = 508002;
   if (!f[6]) e.charaRedId = 601001;

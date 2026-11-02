@@ -79,6 +79,10 @@ export function loadAnim3pv(skel = "swat_male"): Promise<Anim3pvIndex | null> {
 /** Pure: AI name for a weapon id/name (null = not in the table). */
 export function aiForWeapon(ix: Anim3pvIndex, key: string | number, cls: UpperClass): string {
   const k = String(key);
+  // Item 213001 (P99&HAK) is authored against the CIC/P99 character AI. The ordinary
+  // HandGun/P99 mapping has no SecondaryAttack and therefore cannot play its HAK stab.
+  const p99HakAI = "CIC/P99";
+  if (k === "213001" && ix.ai[p99HakAI]?.stances.AttackIdle?.SecondaryAttack) return p99HakAI;
   const hit = ix.weapons[k] ?? ix.names[norm(k)];
   // dual-wield AIs (DualHandGun/..., DualSMG/...) have Left*/Right* layers instead of Idle: bindWeaponAnim merges them
   const A = hit ? ix.ai[hit]?.stances.AttackIdle : undefined;

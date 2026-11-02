@@ -60,7 +60,7 @@ export function buildParams(fam: Family, s: WeaponStat, pb: PbWeaponBlock | unde
   const c = { ...rep.crosshair, ...p.crosshair };
   const m = { ...rep.moveNormal, ...p.moveNormal };
   const auto = p.autoFireCount;
-  const scope = fam !== "KNIFE" && fam !== "GRENADE" && (p.extType === "Scope" || p.zoomType === 3) && (p.fovOnScope ?? 0) > 0;
+  const hasSecondaryMelee = fam !== "KNIFE" && fam !== "GRENADE" && !!p.melee && (p.melee.damageB1 !== undefined || p.melee.timeB1 !== undefined || p.melee.fireDelay2 !== undefined); const scope = fam !== "KNIFE" && fam !== "GRENADE" && !hasSecondaryMelee && (p.extType === "Scope" || p.zoomType === 3) && (p.fovOnScope ?? 0) > 0;
   const x = p.ext ?? {};
   const params: ClassParams = {
     fireMode: s.fireMode ?? FAMILY_MODE[fam] ?? "semi",
@@ -104,7 +104,7 @@ export function buildParams(fam: Family, s: WeaponStat, pb: PbWeaponBlock | unde
       recoilHorzFactor: x.recoilHorzFactor, recoilHorzCount: x.recoilHorzCount, recoilVertCount: x.recoilVertCount },
     fallback: !pb,
   };
-  if (fam === "KNIFE") {
+  if (fam === "KNIFE" || hasSecondaryMelee) {
     const k = { ...rep.melee, ...p.melee };
     params.melee = {
       damageA: k.damageA1 ?? s.damage, timeA: k.timeA1 ?? 0.1,
